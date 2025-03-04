@@ -1,0 +1,10 @@
+# Ignore node_modules (Svelte dependencies)
+node_modules/
+
+# Ignore SFTP config (if it has passwords)
+sftp.json
+.vscode/
+
+# Ignore OS files
+.DS_Store
+thumbs.db
