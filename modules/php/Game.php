@@ -292,9 +292,64 @@ class Game extends \Table
 
         // TODO: Setup the initial game situation here.
 
+
+        //Setup Cards
+
+        $amountOfPlayers = count($players);
+        $set2Player = 1;
+        $set3Player = 1;
+        $set4Player = 1;
+        if ($amountOfPlayers < 3) {
+            $set3Player = 0;
+        }
+        if ($amountOfPlayers < 4) {
+            $set4Player = 0;
+        }
+
+        $insertValues =  [
+        0 => "('C00', 'Assassin', 'Hand', 'noPlayerID', 1, $set2Player)",
+        1 => "('C01', 'Assassin', 'Hand', 'noPlayerID', 1, $set2Player)",
+        2 => "('C02', 'Assassin', 'Hand', 'noPlayerID', 1, $set2Player)",
+        3 => "('C03', 'Assassin', 'Hand', 'noPlayerID', 1, $set4Player)",
+        4 => "('C04', 'Trader', 'Hand', 'noPlayerID', 1, $set2Player)",
+        5 => "('C05', 'Trader', 'Hand', 'noPlayerID', 1, $set3Player)",
+        6 => "('C06', 'Trader', 'Hand', 'noPlayerID', 1, $set3Player)",
+        7 => "('C07', 'Squire', 'Hand', 'noPlayerID', 1, $set2Player)",
+        8 => "('C08', 'Squire', 'Hand', 'noPlayerID', 1, $set3Player)",
+        9 => "('C09', 'Squire', 'Hand', 'noPlayerID', 1, $set3Player)",
+        10 => "('C10', 'Guard', 'Hand', 'noPlayerID', 1, $set2Player)",
+        11 => "('C11', 'Guard', 'Hand', 'noPlayerID', 1, $set3Player)",
+        12 => "('C12', 'Scholar', 'Hand', 'noPlayerID', 1, $set2Player)",
+        13 => "('C13', 'Scholar', 'Hand', 'noPlayerID', 1, $set3Player)",
+        14 => "('C14', 'Scholar', 'Hand', 'noPlayerID', 1, $set4Player)",
+        15 => "('C15', 'Priest', 'Hand', 'noPlayerID', 1, $set2Player)",
+        16 => "('C16', 'Priest', 'Hand', 'noPlayerID', 1, $set3Player)",
+        17 => "('C17', 'Jester', 'Hand', 'noPlayerID', 1, $set2Player)",
+        18 => "('C18', 'Jester', 'Hand', 'noPlayerID', 1, $set2Player)",
+        19 => "('C19', 'Jester', 'Hand', 'noPlayerID', 1, $set2Player)",
+        20 => "('C20', 'Jester', 'Hand', 'noPlayerID', 1, $set4Player)",
+        21 => "('C21', 'Treasurer', 'Hand', 'noPlayerID', 1, $set2Player)",
+        22 => "('C22', 'Treasurer', 'Hand', 'noPlayerID', 1, $set2Player)",
+        23 => "('C23', 'Treasurer', 'Hand', 'noPlayerID', 1, $set4Player)",
+        24 => "('C24', 'Knight', 'Hand', 'noPlayerID', 1, $set2Player)",
+        25 => "('C25', 'Knight', 'Hand', 'noPlayerID', 1, $set2Player)",
+        26 => "('C26', 'Knight', 'Hand', 'noPlayerID', 1, $set4Player)",
+        27 => "('C27', 'General', 'Hand', 'noPlayerID', 1, $set2Player)",
+        28 => "('C28', 'General', 'Hand', 'noPlayerID', 1, $set2Player)",
+        29 => "('C29', 'General', 'Hand', 'noPlayerID', 1, $set4Player)",
+        30 => "('C30', 'Princess', 'Hand', 'noPlayerID', 1, $set2Player)",
+        ];
+        
+        $sql =
+            'INSERT INTO cards (id, card_type, card_location, card_owner, stack_position, is_ingame) VALUES ' .
+            implode(',', $insertValues);
+        $this->DbQuery($sql);
+
         // Activate first player once everything has been initialized and ready.
         $this->activeNextPlayer();
     }
+
+
 
     /**
      * This method is called each time it is the turn of a player who has quit the game (= "zombie" player).

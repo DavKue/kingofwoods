@@ -33,3 +33,11 @@
 -- Example 2: add a custom field to the standard "player" table
 -- ALTER TABLE `player` ADD `player_my_custom_field` INT UNSIGNED NOT NULL DEFAULT '0';
 
+CREATE TABLE IF NOT EXISTS `cards` (
+  `id` VARCHAR(255) PRIMARY KEY,
+  `card_type` VARCHAR(255) NOT NULL,
+  `card_location` VARCHAR(255) NOT NULL,
+  `card_owner` VARCHAR(255) NOT NULL,
+  `stack_position` INT(255) DEFAULT 1,
+  `is_ingame` BOOLEAN DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

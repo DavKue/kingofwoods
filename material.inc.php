@@ -1,57 +1,61 @@
+<?php
+
 $this->cards = [
- 'C01' => [
+ 'Assassin' => [
    'name' => clienttranslate("Assassin"),
    'influence' => 0,
   ],
 
-  'C02' => [
+  'Trader' => [
    'name' => clienttranslate("Trader"),
    'influence' => 1,
   ],
 
-  'C03' => [
+  'Guard' => [
    'name' => clienttranslate("Guard"),
    'influence' => 2,
   ],
 
-  'C04' => [
+  'Squire' => [
    'name' => clienttranslate("Squire"),
    'influence' => 2,
   ],
 
-  'C05' => [
+  'Scholar' => [
    'name' => clienttranslate("Scholar"),
    'influence' => 3,
   ],
 
-  'C06' => [
+  'Priest' => [
    'name' => clienttranslate("Priest"),
    'influence' => 3,
   ],
 
-  'C07' => [
+  'Jester' => [
    'name' => clienttranslate("Jester"),
    'influence' => 4,
   ],
 
-  'C08' => [
+  'Treasurer' => [
    'name' => clienttranslate("Treasurer"),
    'influence' => 4,
   ],
 
-  'C09' => [
+  'Knight' => [
    'name' => clienttranslate("Knight"),
    'influence' => 5,
   ],
 
-  'C10' => [
+  'General' => [
    'name' => clienttranslate("General"),
    'influence' => 6,
   ],
 
-  'C11' => [
+  'Princess' => [
    'name' => clienttranslate("Princess"),
    'influence' => 7,
   ],
 
 ];
+
+?>
