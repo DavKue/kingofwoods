@@ -34,7 +34,7 @@
 -- ALTER TABLE `player` ADD `player_my_custom_field` INT UNSIGNED NOT NULL DEFAULT '0';
 
 CREATE TABLE IF NOT EXISTS `cards` (
-  `id` VARCHAR(255) PRIMARY KEY,
+  `card_id` VARCHAR(255) PRIMARY KEY,
   `card_type` VARCHAR(255) NOT NULL,
   `card_location` VARCHAR(255) NOT NULL,
   `card_owner` VARCHAR(255) NOT NULL,

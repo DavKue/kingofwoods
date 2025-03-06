@@ -64,7 +64,17 @@ $machinestates = [
 
     // Note: ID=2 => your first state
 
-    2 => [
+    02 => [
+        "name" => "dealCards",
+        "description" => '',
+        "type" => "game",
+        "action" => "stDealCards",
+        "updateGameProgression" => true,
+        "transitions" => ["nextPlayer" => 10]
+    ],
+
+
+    10 => [
         "name" => "playerTurn",
         "description" => clienttranslate('${actplayer} must play a card or pass'),
         "descriptionmyturn" => clienttranslate('${you} must play a card or pass'),
@@ -75,16 +85,16 @@ $machinestates = [
             "actPlayCard", 
             "actPass",
         ],
-        "transitions" => ["playCard" => 3, "pass" => 3]
+        "transitions" => ["playCard" => 11, "pass" => 11]
     ],
 
-    3 => [
+    11 => [
         "name" => "nextPlayer",
         "description" => '',
         "type" => "game",
         "action" => "stNextPlayer",
         "updateGameProgression" => true,
-        "transitions" => ["endGame" => 99, "nextPlayer" => 2]
+        "transitions" => ["endGame" => 99, "nextPlayer" => 10]
     ],
 
     // Final state.

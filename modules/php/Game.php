@@ -161,6 +161,57 @@ class Game extends \Table
      *
      * The action method of state `nextPlayer` is called everytime the current game state is set to `nextPlayer`.
      */
+
+    public function stDealCards(): void {
+
+        // Get all in-game cards and shuffle them
+        $sql = "SELECT * FROM cards WHERE is_ingame = 1";
+        $cards = $this->getCollectionFromDB($sql);
+        shuffle($cards);
+        
+        $players = $this->loadPlayersBasicInfos();
+        $playerCount = count($players);
+        
+        // Determine card distribution based on player count
+        if ($playerCount == 2) {
+            $cardsPerPlayer = 8;
+            $asideCards = 4;
+        } else { // 3 or 4 players
+            $cardsPerPlayer = 7;
+            $asideCards = 3;
+        }
+
+        // Calculate total needed cards and validate
+        $totalNeeded = ($cardsPerPlayer * $playerCount) + $asideCards;
+        if (count($cards) < $totalNeeded) {
+            throw new BgaSystemException("Not enough cards in game!");
+        }
+
+        // Split cards into player cards and aside cards
+        $playerCards = array_slice($cards, 0, $cardsPerPlayer * $playerCount);
+        $asideCards = array_slice($cards, $cardsPerPlayer * $playerCount, $asideCards);
+
+        // Prepare SQL updates
+        $sqlUpdates = [];
+
+        // Distribute player cards
+        $playerIndex = 0;
+        foreach ($players as $playerId => $player) {
+            $playerCardsChunk = array_slice($playerCards, $playerIndex * $cardsPerPlayer, $cardsPerPlayer);
+            foreach ($playerCardsChunk as $card) {
+                $this->DbQuery("UPDATE cards SET card_owner = '$playerId' WHERE card_id = '{$card['card_id']}'");
+            }
+            $playerIndex++;
+        }
+
+        // Set aside cards
+        foreach ($asideCards as $card) {
+            $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID' WHERE card_id = '{$card['card_id']}'");
+        }
+
+        $this->gamestate->nextState("nextPlayer");
+    } 
+
     public function stNextPlayer(): void {
         // Retrieve the active player ID.
         $player_id = (int)$this->getActivePlayerId();
@@ -341,7 +392,7 @@ class Game extends \Table
         ];
         
         $sql =
-            'INSERT INTO cards (id, card_type, card_location, card_owner, stack_position, is_ingame) VALUES ' .
+            'INSERT INTO cards (card_id, card_type, card_location, card_owner, stack_position, is_ingame) VALUES ' .
             implode(',', $insertValues);
         $this->DbQuery($sql);
 
