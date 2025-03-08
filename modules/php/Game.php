@@ -206,7 +206,19 @@ class Game extends \Table
 
         // Set aside cards
         foreach ($asideCards as $card) {
-            $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID' WHERE card_id = '{$card['card_id']}'");
+            $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID', card_location = 'aside' WHERE card_id = '{$card['card_id']}'");
+        }
+
+        $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
+        foreach ($players as $playerId => $player) {
+            $hiddenCards = $allCards;
+            foreach ($allCards as $index => $card) {
+                if (($card['card_owner'] != $playerId && $card['card_location'] == 'Hand') || ($card['is_ingame'] == 0)){
+                    $hiddenCards[$index]['card_id'] = 'hidden';
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
+            }
+            $this->notify->player($playerId, 'cardUpdate', '', $hiddenCards );
         }
 
         $this->gamestate->nextState("nextPlayer");
@@ -278,6 +290,17 @@ class Game extends \Table
         );
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
+
+
+        $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
+        $hiddenCards = $allCards;
+        foreach ($allCards as $index => $card) {
+            if (($card['card_owner'] != $current_player_id && $card['card_location'] == 'Hand') || ($card['is_ingame'] == 0)) {
+                $hiddenCards[$index]['card_id'] = 'hidden';
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $result['cards'] = $hiddenCards;
 
         return $result;
     }
