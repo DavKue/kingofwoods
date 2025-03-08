@@ -213,12 +213,11 @@ class Game extends \Table
         foreach ($players as $playerId => $player) {
             $hiddenCards = $allCards;
             foreach ($allCards as $index => $card) {
-                if (($card['card_owner'] != $playerId && $card['card_location'] == 'Hand') || ($card['is_ingame'] == 0)){
-                    $hiddenCards[$index]['card_id'] = 'hidden';
+                if (($card['card_owner'] != $playerId && $card['card_location'] == 'hand') || ($card['is_ingame'] == 0)){
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($playerId, 'cardUpdate', '', $hiddenCards );
+            $this->notify->player($playerId, 'cardMoved', '', array_values($hiddenCards) );
         }
 
         $this->gamestate->nextState("nextPlayer");
@@ -295,12 +294,11 @@ class Game extends \Table
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
         $hiddenCards = $allCards;
         foreach ($allCards as $index => $card) {
-            if (($card['card_owner'] != $current_player_id && $card['card_location'] == 'Hand') || ($card['is_ingame'] == 0)) {
-                $hiddenCards[$index]['card_id'] = 'hidden';
+            if (($card['card_owner'] != $current_player_id && $card['card_location'] == 'hand') || ($card['is_ingame'] == 0)) {
                 $hiddenCards[$index]['card_type'] = 'hidden';
             }
         }
-        $result['cards'] = $hiddenCards;
+        $result['cards'] = array_values($hiddenCards);
 
         return $result;
     }
@@ -381,37 +379,37 @@ class Game extends \Table
         }
 
         $insertValues =  [
-        0 => "('C00', 'Assassin', 'Hand', 'noPlayerID', 1, $set2Player)",
-        1 => "('C01', 'Assassin', 'Hand', 'noPlayerID', 1, $set2Player)",
-        2 => "('C02', 'Assassin', 'Hand', 'noPlayerID', 1, $set2Player)",
-        3 => "('C03', 'Assassin', 'Hand', 'noPlayerID', 1, $set4Player)",
-        4 => "('C04', 'Trader', 'Hand', 'noPlayerID', 1, $set2Player)",
-        5 => "('C05', 'Trader', 'Hand', 'noPlayerID', 1, $set3Player)",
-        6 => "('C06', 'Trader', 'Hand', 'noPlayerID', 1, $set3Player)",
-        7 => "('C07', 'Squire', 'Hand', 'noPlayerID', 1, $set2Player)",
-        8 => "('C08', 'Squire', 'Hand', 'noPlayerID', 1, $set3Player)",
-        9 => "('C09', 'Squire', 'Hand', 'noPlayerID', 1, $set3Player)",
-        10 => "('C10', 'Guard', 'Hand', 'noPlayerID', 1, $set2Player)",
-        11 => "('C11', 'Guard', 'Hand', 'noPlayerID', 1, $set3Player)",
-        12 => "('C12', 'Scholar', 'Hand', 'noPlayerID', 1, $set2Player)",
-        13 => "('C13', 'Scholar', 'Hand', 'noPlayerID', 1, $set3Player)",
-        14 => "('C14', 'Scholar', 'Hand', 'noPlayerID', 1, $set4Player)",
-        15 => "('C15', 'Priest', 'Hand', 'noPlayerID', 1, $set2Player)",
-        16 => "('C16', 'Priest', 'Hand', 'noPlayerID', 1, $set3Player)",
-        17 => "('C17', 'Jester', 'Hand', 'noPlayerID', 1, $set2Player)",
-        18 => "('C18', 'Jester', 'Hand', 'noPlayerID', 1, $set2Player)",
-        19 => "('C19', 'Jester', 'Hand', 'noPlayerID', 1, $set2Player)",
-        20 => "('C20', 'Jester', 'Hand', 'noPlayerID', 1, $set4Player)",
-        21 => "('C21', 'Treasurer', 'Hand', 'noPlayerID', 1, $set2Player)",
-        22 => "('C22', 'Treasurer', 'Hand', 'noPlayerID', 1, $set2Player)",
-        23 => "('C23', 'Treasurer', 'Hand', 'noPlayerID', 1, $set4Player)",
-        24 => "('C24', 'Knight', 'Hand', 'noPlayerID', 1, $set2Player)",
-        25 => "('C25', 'Knight', 'Hand', 'noPlayerID', 1, $set2Player)",
-        26 => "('C26', 'Knight', 'Hand', 'noPlayerID', 1, $set4Player)",
-        27 => "('C27', 'General', 'Hand', 'noPlayerID', 1, $set2Player)",
-        28 => "('C28', 'General', 'Hand', 'noPlayerID', 1, $set2Player)",
-        29 => "('C29', 'General', 'Hand', 'noPlayerID', 1, $set4Player)",
-        30 => "('C30', 'Princess', 'Hand', 'noPlayerID', 1, $set2Player)",
+        0 => "('C00', 'Assassin', 'hand', 'noPlayerID', 1, $set2Player)",
+        1 => "('C01', 'Assassin', 'hand', 'noPlayerID', 1, $set2Player)",
+        2 => "('C02', 'Assassin', 'hand', 'noPlayerID', 1, $set2Player)",
+        3 => "('C03', 'Assassin', 'hand', 'noPlayerID', 1, $set4Player)",
+        4 => "('C04', 'Trader', 'hand', 'noPlayerID', 1, $set2Player)",
+        5 => "('C05', 'Trader', 'hand', 'noPlayerID', 1, $set3Player)",
+        6 => "('C06', 'Trader', 'hand', 'noPlayerID', 1, $set3Player)",
+        7 => "('C07', 'Squire', 'hand', 'noPlayerID', 1, $set2Player)",
+        8 => "('C08', 'Squire', 'hand', 'noPlayerID', 1, $set3Player)",
+        9 => "('C09', 'Squire', 'hand', 'noPlayerID', 1, $set3Player)",
+        10 => "('C10', 'Guard', 'hand', 'noPlayerID', 1, $set2Player)",
+        11 => "('C11', 'Guard', 'hand', 'noPlayerID', 1, $set3Player)",
+        12 => "('C12', 'Scholar', 'hand', 'noPlayerID', 1, $set2Player)",
+        13 => "('C13', 'Scholar', 'hand', 'noPlayerID', 1, $set3Player)",
+        14 => "('C14', 'Scholar', 'hand', 'noPlayerID', 1, $set4Player)",
+        15 => "('C15', 'Priest', 'hand', 'noPlayerID', 1, $set2Player)",
+        16 => "('C16', 'Priest', 'hand', 'noPlayerID', 1, $set3Player)",
+        17 => "('C17', 'Jester', 'hand', 'noPlayerID', 1, $set2Player)",
+        18 => "('C18', 'Jester', 'hand', 'noPlayerID', 1, $set2Player)",
+        19 => "('C19', 'Jester', 'hand', 'noPlayerID', 1, $set2Player)",
+        20 => "('C20', 'Jester', 'hand', 'noPlayerID', 1, $set4Player)",
+        21 => "('C21', 'Treasurer', 'hand', 'noPlayerID', 1, $set2Player)",
+        22 => "('C22', 'Treasurer', 'hand', 'noPlayerID', 1, $set2Player)",
+        23 => "('C23', 'Treasurer', 'hand', 'noPlayerID', 1, $set4Player)",
+        24 => "('C24', 'Knight', 'hand', 'noPlayerID', 1, $set2Player)",
+        25 => "('C25', 'Knight', 'hand', 'noPlayerID', 1, $set2Player)",
+        26 => "('C26', 'Knight', 'hand', 'noPlayerID', 1, $set4Player)",
+        27 => "('C27', 'General', 'hand', 'noPlayerID', 1, $set2Player)",
+        28 => "('C28', 'General', 'hand', 'noPlayerID', 1, $set2Player)",
+        29 => "('C29', 'General', 'hand', 'noPlayerID', 1, $set4Player)",
+        30 => "('C30', 'Princess', 'hand', 'noPlayerID', 1, $set2Player)",
         ];
         
         $sql =

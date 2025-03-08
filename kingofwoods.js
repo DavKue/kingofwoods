@@ -18,7 +18,8 @@
 define([
     "dojo","dojo/_base/declare",
     "ebg/core/gamegui",
-    "ebg/counter"
+    "ebg/counter",
+    "ebg/stock"
 ],
 function (dojo, declare) {
     return declare("bgagame.kingofwoods", ebg.core.gamegui, {
@@ -28,6 +29,23 @@ function (dojo, declare) {
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
+
+            this.playerStocks = {}; // Stores stocks for each player { playerId: { hand, table } }
+            this.cardTypeMap = {
+                'Assassin': 1,
+                'Trader': 2,
+                'Guard': 3,
+                'Squire': 4,
+                'Scholar': 5,
+                'Priest': 6,
+                'Jester': 7,
+                'Treasurer': 8,
+                'Knight': 9,
+                'General': 10,
+                'Princess': 11,
+                'Backside': 12
+            };
+            this.slideDuration = 500;
 
         },
         
@@ -48,30 +66,41 @@ function (dojo, declare) {
         {
             console.log( "Starting game setup" );
 
-            // Example to add a div on the game area
-            document.getElementById('game_play_area').insertAdjacentHTML('beforeend', `
-                <div id="player-tables"></div>
-            `);
+            // // Example to add a div on the game area
+            // document.getElementById('game_play_area').insertAdjacentHTML('beforeend', `
+            //     <div id="player-tables"></div>
+            // `);
             
-            // Setting up player boards
-            Object.values(gamedatas.players).forEach(player => {
-                // example of setting up players boards
-                this.getPlayerPanelElement(player.id).insertAdjacentHTML('beforeend', `
-                    <div id="player-counter-${player.id}">A player counter</div>
-                `);
+            // // Setting up player boards
+            // Object.values(gamedatas.players).forEach(player => {
+            //     // example of setting up players boards
+            //     this.getPlayerPanelElement(player.id).insertAdjacentHTML('beforeend', `
+            //         <div id="player-counter-${player.id}">A player counter</div>
+            //     `);
 
-                // example of adding a div for each player
-                document.getElementById('player-tables').insertAdjacentHTML('beforeend', `
-                    <div id="player-table-${player.id}">
-                        <strong>${player.name}</strong>
-                        <div>Player zone content goes here</div>
-                    </div>
-                `);
-            });
+            //     // example of adding a div for each player
+            //     document.getElementById('player-tables').insertAdjacentHTML('beforeend', `
+            //         <div id="player-table-${player.id}">
+            //             <strong>${player.name}</strong>
+            //             <div>Player zone content goes here</div>
+            //         </div>
+            //     `);
+            // });
             
             // TODO: Set up your game interface here, according to "gamedatas"
             
- 
+            // Create main game containers
+            document.getElementById('game_play_area').insertAdjacentHTML('beforeend', `
+                <div id="player-tables"></div>
+            `);
+
+            // Initialize all player stocks
+            this.initializePlayerStocks(gamedatas.players);
+            
+            // Load initial card positions
+            this.updateCardDisplay(gamedatas.cards);
+
+
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
 
@@ -169,6 +198,95 @@ function (dojo, declare) {
         
         */
 
+        initializePlayerStocks: function(players) {
+            const playerTables = document.getElementById('player-tables');
+            
+            Object.values(players).forEach(player => {
+                // Create player area
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-board';
+                playerDiv.innerHTML = `
+                    <div class="hand-container" id="hand-${player.id}"></div>
+                    <div class="table-container" id="table-${player.id}"></div>
+                `;
+                playerTables.appendChild(playerDiv);
+
+                // Initialize Hand Stock
+                const handStock = new ebg.stock();
+                handStock.create(this, $(`hand-${player.id}`), 768, 1181);
+                this.configureStock(handStock);
+
+                // Initialize Table Stock
+                const tableStock = new ebg.stock();
+                tableStock.create(this, $(`table-${player.id}`), 768, 1181);
+                this.configureStock(tableStock);
+
+                // Store references
+                this.playerStocks[player.id] = { hand: handStock, table: tableStock };
+            });
+        },
+
+        configureStock: function(stock) {
+            stock.setSelectionAppearance('none');
+            stock.image_items_per_row = 4;
+            stock.item_image_url = g_gamethemeurl + 'img/KotW_Cards_Spreadsheet.jpg';
+            
+            // Add card types to each stock
+            Object.entries(this.cardTypeMap).forEach(([name, typeId]) => {
+                stock.addItemType(
+                    typeId,
+                    1, // Weight
+                    stock.item_image_url,
+                    typeId - 1 // Position index
+                );
+            });
+        },
+
+        updateCardDisplay: function(cards) {
+            console.log('cards:', cards);
+            cards.forEach(card => {
+                if (card.card_location == 'aside') {
+                    return;
+                }
+
+                const isPublic = card.card_location != 'hidden';
+                const targetPlayerId = card.card_owner;
+                const targetStock = isPublic ? 
+                    this.playerStocks[targetPlayerId]?.table : 
+                    this.playerStocks[targetPlayerId]?.hand;
+        
+                if (!targetStock) {
+                    console.error(`No stock found for player ${targetPlayerId}`);
+                    return;
+                }
+        
+                // Remove from previous location if needed
+                Object.values(this.playerStocks).forEach(({hand, table}) => {
+                    if (hand.items[card.card_id]) hand.removeFromStockById(card.card_id);
+                    if (table.items[card.card_id]) table.removeFromStockById(card.card_id);
+                });
+        
+                // Add to new location
+                if (!targetStock.items[card.card_id]) {
+                    const typeId = this.cardTypeMap[card.card_type] || this.cardTypeMap['Backside'];
+                    targetStock.addToStockWithId(typeId, card.card_id);
+                }
+        
+                // // Set visibility
+                // const isOwner = targetPlayerId == this.player_id;
+                // targetStock.setItemStatus(card.card_id, isPublic || isOwner ? 'visible' : 'hidden');
+                
+                // // Set stacking
+                // targetStock.setOverlap(card.card_id, card.stack_position * 15, 0);
+            });
+        
+            // Update all stocks
+            Object.values(this.playerStocks).forEach(({hand, table}) => {
+                hand.updateDisplay();
+                table.updateDisplay();
+            });
+        },
+
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -226,6 +344,11 @@ function (dojo, declare) {
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
             // 
+
+            dojo.subscribe('cardMoved', this, notif => {
+                this.updateCardDisplay(notif.args.cards);
+            });
+            this.notifqueue.setSynchronous('cardMoved', 500);
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods
