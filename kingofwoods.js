@@ -271,40 +271,46 @@ function (dojo, declare) {
         },
 
         updateCardDisplay: function(cards) {
+            // Ensure array
+            if (!Array.isArray(cards)) cards = [cards];
+        
             cards.forEach(card => {
-                if (card.card_owner == 'noPlayerID') {
+                console.log('card:', card);
+                if (card.card_location == 'aside') {
                     return;
                 }
-
+                // Find current stock
+                const fromStock = this.findCardStock(card.card_id);
                 const targetPlayerId = card.card_owner;
-                const inCourt = card.card_location == 'court';
-                const targetStock = inCourt ? 
-                    this.playerStocks[targetPlayerId]?.court : 
-                    this.playerStocks[targetPlayerId]?.hand;
-        
-                if (!targetStock) {
-                    console.error(`No stock found for player ${targetPlayerId}`);
-                    return;
-                }
-        
-                // Remove from previous location if needed
-                Object.values(this.playerStocks).forEach(({hand, court}) => {
-                    if (hand.items[card.card_id]) hand.removeFromStockById(card.card_id);
-                    if (court.items[card.card_id]) court.removeFromStockById(card.card_id);
-                });
-        
-                // Add to new location
-                if (!targetStock.items[card.card_id]) {
-                    const typeId = this.cardTypeMap[card.card_type] || this.cardTypeMap['Backside'];
-                    targetStock.addToStockWithId(typeId, card.card_id);
+                const toStock = card.card_location == 'court' ? 
+                    this.playerStocks[targetPlayerId].court : 
+                    this.playerStocks[targetPlayerId].hand;
+                const typeId = this.cardTypeMap[card.card_type] || this.cardTypeMap['Backside'];
+                if (fromStock && fromStock !== toStock) {
+                    // Animate movement between stocks
+                    fromStock.moveToAnotherStock(
+                        card.card_id,
+                        toStock,
+                        this.slideDuration
+                    );
+                } else if (!fromStock) {
+                    // New card - add with animation
+                    toStock.addToStockWithId(
+                        typeId,
+                        card.card_id
+                    );
                 }
             });
+        },
         
-            // Update all stocks
-            Object.values(this.playerStocks).forEach(({hand, court}) => {
-                hand.updateDisplay();
-                court.updateDisplay();
-            });
+        // Helper to find which stock contains a card
+        findCardStock: function(cardId) {
+            for (const playerId in this.playerStocks) {
+                const { hand, court } = this.playerStocks[playerId];
+                if (hand.items[cardId]) return hand;
+                if (court.items[cardId]) return court;
+            }
+            return null;
         },
 
         showPlayerTargets: function(cardId) {
@@ -432,7 +438,12 @@ function (dojo, declare) {
             // 
 
             dojo.subscribe('cardMoved', this, notif => {
-                this.updateCardDisplay(notif.args.cards);
+                // Ensure we always get an array
+                const cards = Array.isArray(notif.args.cards) ? 
+                    notif.args.cards : 
+                    [notif.args.cards];
+                
+                this.updateCardDisplay(cards);
             });
             this.notifqueue.setSynchronous('cardMoved', 500);
         },  

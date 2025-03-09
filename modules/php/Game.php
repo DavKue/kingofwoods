@@ -116,16 +116,17 @@ class Game extends \Table
 
         // Notify all players about the card played.
         $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$card_id'");
-        $this->notify->all( 'cardMoved', '', array_values($cardNofif) );
+        // $this->notify->all( 'cardMoved', '', array_values($cardNofif) );
 
-        // $this->notify->all("cardMoved", clienttranslate('${player_name} plays ${card_name} in court of ${target_player}'), [
-        //     "player_id" => $player_id,
-        //     "player_name" => $this->getActivePlayerName(),
-        //     "target_player" => $this->getPlayerNameById($target_player_id),
-        //     "card_name" => $card_name,
-        //     "card_id" => $card_id,
-        //     "i18n" => ['card_name'],
-        // ]);
+        $this->notify->all("cardMoved", clienttranslate('${player_name} plays ${card_name} in court of ${target_player}'), [
+            "cards" => $cardNofif,
+            "player_id" => $player_id,
+            "player_name" => $this->getActivePlayerName(),
+            "target_player" => $this->getPlayerNameById($target_player_id),
+            "card_name" => $card_name,
+            "card_id" => $card_id,
+            "i18n" => ['card_name'],
+        ]);
 
         // at the end of the action, move to the next state
         $this->gamestate->nextState("playCard");
@@ -190,12 +191,6 @@ class Game extends \Table
         } else { // 3 or 4 players
             $cardsPerPlayer = 7;
             $asideCards = 3;
-        }
-
-        // Calculate total needed cards and validate
-        $totalNeeded = ($cardsPerPlayer * $playerCount) + $asideCards;
-        if (count($cards) < $totalNeeded) {
-            throw new BgaSystemException("Not enough cards in game!");
         }
 
         // Split cards into player cards and aside cards
@@ -392,34 +387,34 @@ class Game extends \Table
             "($randomArray[1], 'Assassin', 'hand', 'noPlayerID', 1)",
             "($randomArray[2], 'Assassin', 'hand', 'noPlayerID', 1)",
             "($randomArray[3], 'Trader', 'hand', 'noPlayerID', 1)",
-            "($randomArray[4], 'Squire', 'hand', 'noPlayerID', 1)",
-            "($randomArray[5], 'Guard', 'hand', 'noPlayerID', 1)",
-            "($randomArray[6], 'Scholar', 'hand', 'noPlayerID', 1)",
-            "($randomArray[7], 'Priest', 'hand', 'noPlayerID', 1)",
-            "($randomArray[8], 'Jester', 'hand', 'noPlayerID', 1)",
-            "($randomArray[9], 'Jester', 'hand', 'noPlayerID', 1)",
+            "($randomArray[4], 'Trader', 'hand', 'noPlayerID', 1)",
+            "($randomArray[5], 'Squire', 'hand', 'noPlayerID', 1)",
+            "($randomArray[6], 'Squire', 'hand', 'noPlayerID', 1)",
+            "($randomArray[7], 'Guard', 'hand', 'noPlayerID', 1)",
+            "($randomArray[8], 'Scholar', 'hand', 'noPlayerID', 1)",
+            "($randomArray[9], 'Priest', 'hand', 'noPlayerID', 1)",
             "($randomArray[10], 'Jester', 'hand', 'noPlayerID', 1)",
-            "($randomArray[11], 'Treasurer', 'hand', 'noPlayerID', 1)",
-            "($randomArray[12], 'Treasurer', 'hand', 'noPlayerID', 1)",
-            "($randomArray[13], 'Knight', 'hand', 'noPlayerID', 1)",
-            "($randomArray[14], 'Knight', 'hand', 'noPlayerID', 1)",
-            "($randomArray[15], 'General', 'hand', 'noPlayerID', 1)",
-            "($randomArray[16], 'General', 'hand', 'noPlayerID', 1)",
-            "($randomArray[17], 'Princess', 'hand', 'noPlayerID', 1)"
+            "($randomArray[11], 'Jester', 'hand', 'noPlayerID', 1)",
+            "($randomArray[12], 'Jester', 'hand', 'noPlayerID', 1)",
+            "($randomArray[13], 'Treasurer', 'hand', 'noPlayerID', 1)",
+            "($randomArray[14], 'Treasurer', 'hand', 'noPlayerID', 1)",
+            "($randomArray[15], 'Knight', 'hand', 'noPlayerID', 1)",
+            "($randomArray[16], 'Knight', 'hand', 'noPlayerID', 1)",
+            "($randomArray[17], 'General', 'hand', 'noPlayerID', 1)",
+            "($randomArray[18], 'General', 'hand', 'noPlayerID', 1)",
+            "($randomArray[19], 'Princess', 'hand', 'noPlayerID', 1)"
         ];
 
         $cards3Players =  [
-            "($randomArray[18], 'Trader', 'hand', 'noPlayerID', 1)",
-            "($randomArray[19], 'Trader', 'hand', 'noPlayerID', 1)",
-            "($randomArray[20], 'Squire', 'hand', 'noPlayerID', 1)",
+            "($randomArray[20], 'Trader', 'hand', 'noPlayerID', 1)",
             "($randomArray[21], 'Squire', 'hand', 'noPlayerID', 1)",
-            "($randomArray[22], 'Guard', 'hand', 'noPlayerID', 1)",
-            "($randomArray[23], 'Scholar', 'hand', 'noPlayerID', 1)",
-            "($randomArray[24], 'Priest', 'hand', 'noPlayerID', 1)",
+            "($randomArray[22], 'Scholar', 'hand', 'noPlayerID', 1)",
+            "($randomArray[23], 'Priest', 'hand', 'noPlayerID', 1)",
         ];
 
         $cards4Players =  [
-            "($randomArray[25], 'Assassin', 'hand', 'noPlayerID', 1)",
+            "($randomArray[24], 'Assassin', 'hand', 'noPlayerID', 1)",
+            "($randomArray[25], 'Guard', 'hand', 'noPlayerID', 1)",
             "($randomArray[26], 'Scholar', 'hand', 'noPlayerID', 1)",
             "($randomArray[27], 'Jester', 'hand', 'noPlayerID', 1)",
             "($randomArray[28], 'Treasurer', 'hand', 'noPlayerID', 1)",
@@ -428,11 +423,11 @@ class Game extends \Table
         ];
         
         $amountOfPlayers = count($players);
-        if ($amountOfPlayers < 2) {
+        if ($amountOfPlayers == 2) {
         $insertValues = $cards2Players;
-        } else if ($amountOfPlayers < 3) {
+        } else if ($amountOfPlayers == 3) {
             $insertValues = array_merge($cards2Players, $cards3Players);
-        } else if ($amountOfPlayers < 4) {
+        } else {
             $insertValues = array_merge($cards2Players, $cards3Players, $cards4Players);
         }
 
