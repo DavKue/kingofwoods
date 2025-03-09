@@ -231,6 +231,25 @@ function (dojo, declare) {
             stock.image_items_per_row = 4;
             stock.item_image_url = g_gamethemeurl + 'img/KotW_Cards_Spreadsheet.jpg';
             
+            // Calculate scaled dimensions
+            const cardScale = 0.20; // Start with 30% size
+            const baseCardWidth = 768;
+            const baseCardHeight = 1181;
+            const baseSpriteWidth = 3072;
+            const baseSpriteHeight = 3543;
+            const scaledCardWidth = baseCardWidth * cardScale;
+            const scaledCardHeight = baseCardHeight * cardScale;
+            const scaledSpriteWidth = baseSpriteWidth * cardScale;
+            const scaledSpriteHeight = baseSpriteHeight * cardScale;
+            // Resize stock items
+            stock.resizeItems(
+                scaledCardWidth,                   // Display width
+                scaledCardHeight,                  // Display height
+                scaledSpriteWidth,            // Original sprite width
+                scaledSpriteHeight            // Original sprite height
+            );
+
+
             // Add card types to each stock
             Object.entries(this.cardTypeMap).forEach(([name, typeId]) => {
                 stock.addItemType(
@@ -245,13 +264,13 @@ function (dojo, declare) {
         updateCardDisplay: function(cards) {
             console.log('cards:', cards);
             cards.forEach(card => {
-                if (card.card_location == 'aside') {
+                if (card.card_owner == 'noPlayerID') {
                     return;
                 }
 
-                const isPublic = card.card_location != 'hidden';
                 const targetPlayerId = card.card_owner;
-                const targetStock = isPublic ? 
+                const onTable = card.card_location == 'table';
+                const targetStock = onTable ? 
                     this.playerStocks[targetPlayerId]?.table : 
                     this.playerStocks[targetPlayerId]?.hand;
         
