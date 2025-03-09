@@ -76,16 +76,15 @@ $machinestates = [
 
     10 => [
         "name" => "playerTurn",
-        "description" => clienttranslate('${actplayer} must play a card or pass'),
-        "descriptionmyturn" => clienttranslate('${you} must play a card or pass'),
+        "description" => clienttranslate('${actplayer} must play a card'),
+        "descriptionmyturn" => clienttranslate('${you} must play a card'),
         "type" => "activeplayer",
-        "args" => "argPlayerTurn",
         "possibleactions" => [
             // these actions are called from the front with bgaPerformAction, and matched to the function on the game.php file
             "actPlayCard", 
             "actPass",
         ],
-        "transitions" => ["playCard" => 11, "pass" => 11]
+        "transitions" => ["playCard" => 11]
     ],
 
     11 => [

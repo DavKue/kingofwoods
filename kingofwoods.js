@@ -30,7 +30,7 @@ function (dojo, declare) {
             // Example:
             // this.myGlobalValue = 0;
 
-            this.playerStocks = {}; // Stores stocks for each player { playerId: { hand, table } }
+            this.playerStocks = {}; // Stores stocks for each player { playerId: { hand, court } }
             this.cardTypeMap = {
                 'Assassin': 1,
                 'Trader': 2,
@@ -46,6 +46,7 @@ function (dojo, declare) {
                 'Backside': 12
             };
             this.slideDuration = 500;
+            this.selectedCardId = null;
 
         },
         
@@ -169,20 +170,15 @@ function (dojo, declare) {
         onUpdateActionButtons: function( stateName, args )
         {
             console.log( 'onUpdateActionButtons: '+stateName, args );
-                      
+                    
+            // Clear previous actions
+            this.statusBar.removeActionButtons()
+
             if( this.isCurrentPlayerActive() )
             {            
                 switch( stateName )
                 {
                  case 'playerTurn':    
-                    const playableCardsIds = args.playableCardsIds; // returned by the argPlayerTurn
-
-                    // Add test action buttons in the action status bar, simulating a card click:
-                    playableCardsIds.forEach(
-                        cardId => this.statusBar.addActionButton(_('Play card with id ${card_id}').replace('${card_id}', cardId), () => this.onCardClick(cardId))
-                    ); 
-
-                    this.statusBar.addActionButton(_('Pass'), () => this.bgaPerformAction("actPass"), { color: 'secondary' }); 
                     break;
                 }
             }
@@ -203,7 +199,7 @@ function (dojo, declare) {
             Object.values(players).forEach(player => {
                 // Create player area
                 const playerDiv = document.createElement('div');
-                playerDiv.className = 'player-board';
+                playerDiv.className = 'player-area';
                 playerDiv.innerHTML = `
                     <div class="player-header" style="color: #${player.color};">
                         <strong>${player.name}</strong>
@@ -213,9 +209,9 @@ function (dojo, declare) {
                             <div class="zone-label">Hand</div>
                             <div class="hand-container" id="hand-${player.id}"></div>
                         </div>
-                        <div class="zone table-zone">
+                        <div class="zone court-zone">
                             <div class="zone-label">Court</div>
-                            <div class="table-container" id="table-${player.id}"></div>
+                            <div class="court-container" id="court-${player.id}"></div>
                         </div>
                     </div>
                 `;
@@ -226,13 +222,13 @@ function (dojo, declare) {
                 handStock.create(this, $(`hand-${player.id}`), 768, 1181);
                 this.configureStock(handStock);
 
-                // Initialize Table Stock
-                const tableStock = new ebg.stock();
-                tableStock.create(this, $(`table-${player.id}`), 768, 1181);
-                this.configureStock(tableStock);
+                // Initialize Court Stock
+                const courtStock = new ebg.stock();
+                courtStock.create(this, $(`court-${player.id}`), 768, 1181);
+                this.configureStock(courtStock);
 
                 // Store references
-                this.playerStocks[player.id] = { hand: handStock, table: tableStock };
+                this.playerStocks[player.id] = { hand: handStock, court: courtStock };
             });
         },
 
@@ -269,6 +265,9 @@ function (dojo, declare) {
                     typeId - 1 // Position index
                 );
             });
+
+            stock.setSelectionMode(1); // Allow single selection
+            dojo.connect(stock, 'onChangeSelection', this, 'onCardSelection');
         },
 
         updateCardDisplay: function(cards) {
@@ -278,9 +277,9 @@ function (dojo, declare) {
                 }
 
                 const targetPlayerId = card.card_owner;
-                const onTable = card.card_location == 'table';
-                const targetStock = onTable ? 
-                    this.playerStocks[targetPlayerId]?.table : 
+                const inCourt = card.card_location == 'court';
+                const targetStock = inCourt ? 
+                    this.playerStocks[targetPlayerId]?.court : 
                     this.playerStocks[targetPlayerId]?.hand;
         
                 if (!targetStock) {
@@ -289,9 +288,9 @@ function (dojo, declare) {
                 }
         
                 // Remove from previous location if needed
-                Object.values(this.playerStocks).forEach(({hand, table}) => {
+                Object.values(this.playerStocks).forEach(({hand, court}) => {
                     if (hand.items[card.card_id]) hand.removeFromStockById(card.card_id);
-                    if (table.items[card.card_id]) table.removeFromStockById(card.card_id);
+                    if (court.items[card.card_id]) court.removeFromStockById(card.card_id);
                 });
         
                 // Add to new location
@@ -299,22 +298,37 @@ function (dojo, declare) {
                     const typeId = this.cardTypeMap[card.card_type] || this.cardTypeMap['Backside'];
                     targetStock.addToStockWithId(typeId, card.card_id);
                 }
-        
-                // // Set visibility
-                // const isOwner = targetPlayerId == this.player_id;
-                // targetStock.setItemStatus(card.card_id, isPublic || isOwner ? 'visible' : 'hidden');
-                
-                // // Set stacking
-                // targetStock.setOverlap(card.card_id, card.stack_position * 15, 0);
             });
         
             // Update all stocks
-            Object.values(this.playerStocks).forEach(({hand, table}) => {
+            Object.values(this.playerStocks).forEach(({hand, court}) => {
                 hand.updateDisplay();
-                table.updateDisplay();
+                court.updateDisplay();
             });
         },
 
+        showPlayerTargets: function(cardId) {
+            this.statusBar.removeActionButtons()
+            
+            // Get all players (including self)
+            const players = this.gamedatas.players;
+            
+            // Add buttons for each player
+            Object.values(players).forEach(player => {
+                this.statusBar.addActionButton(
+                    _('Play to ${player_name}\'s court').replace('${player_name}', player.name),
+                    () => this.confirmCardPlay(cardId, player.id),
+                    { color: player.color }
+                );
+            });
+            
+            // Add cancel button
+            this.statusBar.addActionButton(
+                _('Cancel'),
+                () => this.cancelCardSelection(),
+                { color: 'secondary' }
+            );
+        },
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -332,19 +346,63 @@ function (dojo, declare) {
         
         // Example:
         
-        onCardClick: function( card_id )
-        {
-            console.log( 'onCardClick', card_id );
-
-            this.bgaPerformAction("actPlayCard", { 
-                card_id,
-            }).then(() =>  {                
-                // What to do after the server call if it succeeded
-                // (most of the time, nothing, as the game will react to notifs / change of state instead)
-            });        
-        },    
-
+        onCardSelection: function(controlName, itemId) {
+            const stock = this.getStockFromControlName(controlName);
+            const selectedItems = stock.getSelectedItems();
+            
+            if (selectedItems.length > 0) {
+                const cardId = selectedItems[0].id;
+                this.onCardClick(cardId);
+            }
+            
+            stock.unselectAll();
+        },
         
+        // Helper to get stock from control name:
+        getStockFromControlName: function(controlName) {
+            for (const playerId in this.playerStocks) {
+                const stocks = this.playerStocks[playerId];
+                if (stocks.hand.control_name === controlName) return stocks.hand;
+                if (stocks.court.control_name === controlName) return stocks.court;
+            }
+            return null;
+        },
+        
+        // Modified card click handler:
+        onCardClick: function(cardId) {
+            console.log('Card clicked:', cardId);
+            
+            // Clear previous buttons
+            this.statusBar.removeActionButtons()
+            
+            if (!this.selectedCardId) {
+                // First selection - show player targets
+                this.selectedCardId = cardId;
+                this.showPlayerTargets(cardId);
+            }
+        },
+
+        confirmCardPlay: function(cardId, targetPlayerId) {
+            this.bgaPerformAction("actPlayCard", {
+                card_id: cardId,
+                target_player_id: targetPlayerId
+            }).then(() => {
+                this.clearSelection();
+            });
+        },
+        
+        cancelCardSelection: function() {
+            // Refresh action buttons to default state
+            this.clearSelection();
+            this.statusBar.removeActionButtons()
+            this.onUpdateActionButtons('playerTurn', this.gamedatas.actionArgs);
+        },
+        
+        clearSelection: function() {
+            this.selectedCardId = null;
+            this.statusBar.removeActionButtons()
+        },
+
         ///////////////////////////////////////////////////
         //// Reaction to cometD notifications
 
