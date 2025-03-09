@@ -273,9 +273,9 @@ function (dojo, declare) {
         updateCardDisplay: function(cards) {
             // Ensure array
             if (!Array.isArray(cards)) cards = [cards];
-        
+            console.log('cards:', cards);
             cards.forEach(card => {
-                console.log('card:', card);
+                console.log('playerStocks:', this.playerStocks);
                 if (card.card_location == 'aside') {
                     return;
                 }

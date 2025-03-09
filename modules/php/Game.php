@@ -117,9 +117,10 @@ class Game extends \Table
         // Notify all players about the card played.
         $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$card_id'");
         // $this->notify->all( 'cardMoved', '', array_values($cardNofif) );
+        $this->dump('##### card notification #####', $cardNofif);
 
         $this->notify->all("cardMoved", clienttranslate('${player_name} plays ${card_name} in court of ${target_player}'), [
-            "cards" => $cardNofif,
+            "cards" => array_values($cardNofif),
             "player_id" => $player_id,
             "player_name" => $this->getActivePlayerName(),
             "target_player" => $this->getPlayerNameById($target_player_id),
