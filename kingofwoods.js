@@ -200,14 +200,24 @@ function (dojo, declare) {
 
         initializePlayerStocks: function(players) {
             const playerTables = document.getElementById('player-tables');
-            
             Object.values(players).forEach(player => {
                 // Create player area
                 const playerDiv = document.createElement('div');
                 playerDiv.className = 'player-board';
                 playerDiv.innerHTML = `
-                    <div class="hand-container" id="hand-${player.id}"></div>
-                    <div class="table-container" id="table-${player.id}"></div>
+                    <div class="player-header" style="color: #${player.color};">
+                        <strong>${player.name}</strong>
+                    </div>
+                    <div class="player-zones">
+                        <div class="zone hand-zone">
+                            <div class="zone-label">Hand</div>
+                            <div class="hand-container" id="hand-${player.id}"></div>
+                        </div>
+                        <div class="zone table-zone">
+                            <div class="zone-label">Court</div>
+                            <div class="table-container" id="table-${player.id}"></div>
+                        </div>
+                    </div>
                 `;
                 playerTables.appendChild(playerDiv);
 
@@ -262,7 +272,6 @@ function (dojo, declare) {
         },
 
         updateCardDisplay: function(cards) {
-            console.log('cards:', cards);
             cards.forEach(card => {
                 if (card.card_owner == 'noPlayerID') {
                     return;
