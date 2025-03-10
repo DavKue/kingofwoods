@@ -288,24 +288,29 @@ function (dojo, declare) {
                 if (!toStock) return;
 
                 if (fromStock && fromStock !== toStock) {
-                    console.log('From Stock:', fromStock.container_div);
                     toStock.addToStockWithId(
                         typeId,
                         card.card_id.toString()
                     );
+                    dojo.addClass(`${toStock.container_div.id}_item_${card.card_id}`, 'delayed-appearance');
+
                     this.slideToObject( $(`${fromStock.container_div.id}_item_${card.card_id}`), `${toStock.container_div.id}_item_${card.card_id}`,  this.slideDuration).play();
+                    
                     setTimeout(function() {
                         fromStock.removeFromStockById(
                             card.card_id, 
                         );
+                        dojo.removeClass(`${toStock.container_div.id}_item_${card.card_id}`, 'delayed-appearance');
                     }, this.slideDuration);
                     return;
+
+                } else {
+                    toStock.addToStockWithId(
+                        typeId,
+                        card.card_id.toString(),
+                    );
                 }
 
-                toStock.addToStockWithId(
-                    typeId,
-                    card.card_id.toString(),
-                );
     
             });
         },

@@ -83,6 +83,12 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
+/* Hide new cards initially */
+.stockitem.delayed-appearance {
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
 .stockitem:hover {
     transform: translateY(-3px);
     z-index: 100 !important;
