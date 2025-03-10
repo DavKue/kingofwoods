@@ -271,11 +271,9 @@ function (dojo, declare) {
         },
 
         updateCardDisplay: function(cards) {
-            // Ensure array
             if (!Array.isArray(cards)) cards = [cards];
-            console.log('cards:', cards);
+
             cards.forEach(card => {
-                console.log('playerStocks:', this.playerStocks);
                 if (card.card_location == 'aside') {
                     return;
                 }
@@ -286,30 +284,45 @@ function (dojo, declare) {
                     this.playerStocks[targetPlayerId].court : 
                     this.playerStocks[targetPlayerId].hand;
                 const typeId = this.cardTypeMap[card.card_type] || this.cardTypeMap['Backside'];
+
+                if (!toStock) return;
+
                 if (fromStock && fromStock !== toStock) {
-                    // Animate movement between stocks
-                    fromStock.moveToAnotherStock(
-                        card.card_id,
-                        toStock,
-                        this.slideDuration
-                    );
-                } else if (!fromStock) {
-                    // New card - add with animation
-                    toStock.addToStockWithId(
-                        typeId,
-                        card.card_id
+                    fromStock.removeFromStockById(
+                        card.card_id, 
+                        toStock.container_div.id, // Slide to target container
                     );
                 }
+
+                toStock.addToStockWithId(
+                    typeId,
+                    card.card_id.toString(),
+                );
+    
             });
         },
         
-        // Helper to find which stock contains a card
         findCardStock: function(cardId) {
+            const searchId = String(cardId);
+            
             for (const playerId in this.playerStocks) {
                 const { hand, court } = this.playerStocks[playerId];
-                if (hand.items[cardId]) return hand;
-                if (court.items[cardId]) return court;
+                
+                // Check hand items
+                const inHand = hand.items.some(item => String(item.id) === searchId);
+                if (inHand) {
+                    console.log(`Found card ${searchId} in player ${playerId}'s hand`);
+                    return hand;
+                }
+                
+                // Check court items
+                const inCourt = court.items.some(item => String(item.id) === searchId);
+                if (inCourt) {
+                    console.log(`Found card ${searchId} in player ${playerId}'s court`);
+                    return court;
+                }
             }
+            
             return null;
         },
 
