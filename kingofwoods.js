@@ -288,10 +288,18 @@ function (dojo, declare) {
                 if (!toStock) return;
 
                 if (fromStock && fromStock !== toStock) {
-                    fromStock.removeFromStockById(
-                        card.card_id, 
-                        toStock.container_div.id, // Slide to target container
+                    console.log('From Stock:', fromStock.container_div);
+                    toStock.addToStockWithId(
+                        typeId,
+                        card.card_id.toString()
                     );
+                    this.slideToObject( $(`${fromStock.container_div.id}_item_${card.card_id}`), `${toStock.container_div.id}_item_${card.card_id}`,  this.slideDuration).play();
+                    setTimeout(function() {
+                        fromStock.removeFromStockById(
+                            card.card_id, 
+                        );
+                    }, this.slideDuration);
+                    return;
                 }
 
                 toStock.addToStockWithId(
