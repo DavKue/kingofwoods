@@ -77,13 +77,17 @@
     opacity: 0.8;
 }
 
-/* Card styling */
+
+/* Cards styling */
 .stockitem {
     border-radius: 8px !important;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* Hide new cards initially */
+/* .stockitem_selected {
+	border: 2px solid red ! important;
+} */
+
 .stockitem.delayed-appearance {
     opacity: 0;
     transition: opacity 1s ease;
@@ -91,7 +95,14 @@
 
 .stockitem:hover {
     transform: translateY(-3px);
+    filter:brightness(1.1);
     z-index: 100 !important;
+}
+
+.stockitem_unselectable  {
+    cursor: default;
+    filter: none !important;
+    transform: none !important;
 }
 
 /* Spacing between player areas */

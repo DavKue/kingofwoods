@@ -267,7 +267,7 @@ function (dojo, declare) {
             });
 
             stock.setSelectionMode(1); // Allow single selection
-            stock.setSelectionAppearance( 'border' );
+            stock.setSelectionAppearance( 'class' );
             stock.ownerPlayerId = parseInt(stock.container_div.id.split('-')[1], 10);
             dojo.connect(stock, 'onChangeSelection', this, 'onCardSelection');
         },
@@ -326,14 +326,12 @@ function (dojo, declare) {
                 // Check hand items
                 const inHand = hand.items.some(item => String(item.id) === searchId);
                 if (inHand) {
-                    console.log(`Found card ${searchId} in player ${playerId}'s hand`);
                     return hand;
                 }
                 
                 // Check court items
                 const inCourt = court.items.some(item => String(item.id) === searchId);
                 if (inCourt) {
-                    console.log(`Found card ${searchId} in player ${playerId}'s court`);
                     return court;
                 }
             }
@@ -404,8 +402,6 @@ function (dojo, declare) {
         
         // Modified card click handler:
         onCardClick: function(cardId) {
-            console.log('Card clicked:', cardId);
-            
             // Clear previous buttons
             this.statusBar.removeActionButtons()
             
@@ -413,7 +409,9 @@ function (dojo, declare) {
                 // First selection - show player targets
                 this.selectedCardId = cardId;
                 const cardStock = this.findCardStock(cardId);
-                // cardStock.selectItem( cardId );
+                // cardStock.selectItem(cardId);
+                // console.log('Selected Items:', cardStock.getSelectedItems());
+                // console.log('Stock:', cardStock);
                 this.showPlayerTargets(cardId);
             }
         },
@@ -449,9 +447,6 @@ function (dojo, declare) {
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
                         const isActive = this.isCurrentPlayerActive();
-                        console.log('isCurrentPlayer', isCurrentPlayer);
-                        console.log('hand id', hand.ownerPlayerId);
-                        console.log('player-ID', this.player_id);
                         hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
                         court.setSelectionMode(0); // Never select from courts
                     });
