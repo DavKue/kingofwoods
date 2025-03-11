@@ -267,6 +267,8 @@ function (dojo, declare) {
             });
 
             stock.setSelectionMode(1); // Allow single selection
+            stock.setSelectionAppearance( 'border' );
+            stock.ownerPlayerId = parseInt(stock.container_div.id.split('-')[1], 10);
             dojo.connect(stock, 'onChangeSelection', this, 'onCardSelection');
         },
 
@@ -410,6 +412,8 @@ function (dojo, declare) {
             if (!this.selectedCardId) {
                 // First selection - show player targets
                 this.selectedCardId = cardId;
+                const cardStock = this.findCardStock(cardId);
+                // cardStock.selectItem( cardId );
                 this.showPlayerTargets(cardId);
             }
         },
@@ -433,6 +437,26 @@ function (dojo, declare) {
         clearSelection: function() {
             this.selectedCardId = null;
             this.statusBar.removeActionButtons()
+        },
+
+        // Update stock selection mode dynamically:
+        onEnteringState: function(stateName, args) {
+            switch(stateName) {
+                case 'playerTurn':
+                    const currentPlayerStocks = this.playerStocks[this.player_id];
+                    
+                    // Enable selection only in current player's hand
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                        const isActive = this.isCurrentPlayerActive();
+                        console.log('isCurrentPlayer', isCurrentPlayer);
+                        console.log('hand id', hand.ownerPlayerId);
+                        console.log('player-ID', this.player_id);
+                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                        court.setSelectionMode(0); // Never select from courts
+                    });
+                    break;
+            }
         },
 
         ///////////////////////////////////////////////////
