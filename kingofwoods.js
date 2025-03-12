@@ -269,6 +269,101 @@ function (dojo, declare) {
             stock.setSelectionAppearance( 'class' );
             stock.ownerPlayerId = parseInt(stock.container_div.id.split('-')[1], 10);
             dojo.connect(stock, 'onChangeSelection', this, 'onCardSelection');
+
+            cardInformation = {
+                'Assassin': {
+                    'type' : 1,
+                    'name' : _('Assassin'),
+                    'influence' : 0,
+                    'text' : _("Cover 1 card at any court. If you cover another Assassin, discard both."),
+                },
+                'Trader': {
+                    'type' : 2,
+                    'name' : _('Trader'),
+                    'influence' : 1,
+                    'text' : _("Intrigue: Give this player facedown 1 card from your hand. They have to return 1 card with higher influence (or the highest)."),
+                },
+                'Guard': {
+                    'type' : 3,
+                    'name' : _('Guard'),
+                    'influence' : 2,
+                    'text' : _("At this court, an Assassin can only cover a Guard."),
+                },
+                'Squire': {
+                    'type' : 4,
+                    'name' : _('Squire'),
+                    'influence' : 2,
+                    'text' : _("If there is already a Squire at any court, you have to play this card. If another player‘s Knight steals a card from your hand, it has to be the Squire."),
+                },
+                'Scholar': {
+                    'type' : 5,
+                    'name' : _('Scholar'),
+                    'influence' : 3,
+                    'text' : _("Intrigue: Take a card with influence 4 or smaller (not the Assassin or the Scholar) from this court to your hand. If not possible, take a card with influence 5 or greater."),
+                },
+                'Priest': {
+                    'type' : 6,
+                    'name' : _('Priest'),
+                    'influence' : 3,
+                    'text' : _("You may put an additional card to the same court in order to take 1 card with lowerinfl uence from there to your hand (not the Assassin or the Jester)."),
+                },
+                'Jester': {
+                    'type' : 7,
+                    'name' : _('Jester'),
+                    'influence' : 4,
+                    'text' : _("A court with exactly 3 Jesters has no influence at all."),
+                },
+                'Treasurer': {
+                    'type' : 8,
+                    'name' : _('Treasurer'),
+                    'influence' : 4,
+                    'text' : _("Intrigue: Draw 1 card from this player‘s hand."),
+                },
+                'Knight': {
+                    'type' : 9,
+                    'name' : _('Knight'),
+                    'influence' : 5,
+                    'text' : _("Intrigue: Look at this person‘s hand cards and take 1. If there is a Squire among the cards, you have to take him."),
+                },
+                'General': {
+                    'type' : 10,
+                    'name' : _('General'),
+                    'influence' : 6,
+                    'text' : _("Intrigue: Exchange your hand cards with this player."),
+                },
+                'Princess': {
+                    'type' : 11,
+                    'name' : _('Princess'),
+                    'influence' : 7,
+                    'text' : _("You can only play her if there are at least 3 uncovered cards at your court. The Princess always breaks ties in her favour."),
+                },
+                'Backside': {
+                    'type' : 12,
+                    'name' : _('Backside'),
+                    'influence' : 0,
+                    'text' : _("This is the backside of the card. What could be behind it?"),
+                },
+            };
+
+            stock.onItemCreate = (itemDiv, itemType, itemId) => {
+                const cardType = Object.keys(this.cardTypeMap).find(
+                    key => this.cardTypeMap[key] === itemType
+                );
+                
+                if (cardType) {
+                    const tooltipHTML = `
+                        <div class="card-tooltip">
+                            <div class="tooltip-header">
+                                <strong>${cardInformation[cardType].name}</strong>
+                                <div class="influence">Influence: ${cardInformation[cardType].influence}</div>
+                            </div>
+                            <div class="tooltip-text">${cardInformation[cardType].text}</div>
+                        </div>
+                    `;
+                    this.addTooltip(itemDiv.id, tooltipHTML);
+                }
+            };
+
         },
 
         updateCardDisplay: function(cards) {
