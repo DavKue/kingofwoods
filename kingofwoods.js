@@ -46,6 +46,7 @@ function (dojo, declare) {
                 'Backside': 12
             };
             this.slideDuration = 500;
+            this.selectedCardId = null;
 
         },
         
@@ -481,6 +482,10 @@ function (dojo, declare) {
         // Example:
         
         onCardSelection: function(controlName, itemId) {
+            if (this.selectedCardId === itemId) {
+                this.clearSelection();
+                return;
+            }
             const stock = this.getStockFromControlName(controlName);
             const selectedItems = stock.getSelectedItems();
             
@@ -502,8 +507,14 @@ function (dojo, declare) {
         
         // Modified card click handler:
         onCardClick: function(cardId) {
-            // Clear previous buttons
+            if (this.selectedCardId === cardId) {
+                this.clearSelection();
+                return;
+            }
+
             this.statusBar.removeActionButtons()
+
+            this.selectedCardId = cardId;
             const cardStock = this.findCardStock(cardId);
             cardStock.selectItem(cardId);
             this.showPlayerTargets(cardId);
@@ -526,6 +537,7 @@ function (dojo, declare) {
         },
         
         clearSelection: function() {
+            this.selectedCardId = null;
             this.unselectAllCards();
             this.statusBar.removeActionButtons()
         },
