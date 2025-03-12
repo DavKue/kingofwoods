@@ -362,6 +362,14 @@ function (dojo, declare) {
             );
         },
 
+        unselectAllCards: function() {
+            for (const playerId in this.playerStocks) {
+                const stocks = this.playerStocks[playerId];
+                stocks.hand.unselectAll();
+                stocks.court.unselectAll();
+            }
+        },
+
         ///////////////////////////////////////////////////
         //// Player's action
         
@@ -386,8 +394,6 @@ function (dojo, declare) {
                 const cardId = selectedItems[0].id;
                 this.onCardClick(cardId);
             }
-            
-            stock.unselectAll();
         },
         
         // Helper to get stock from control name:
@@ -409,9 +415,7 @@ function (dojo, declare) {
                 // First selection - show player targets
                 this.selectedCardId = cardId;
                 const cardStock = this.findCardStock(cardId);
-                // cardStock.selectItem(cardId);
-                // console.log('Selected Items:', cardStock.getSelectedItems());
-                // console.log('Stock:', cardStock);
+                cardStock.selectItem(cardId);
                 this.showPlayerTargets(cardId);
             }
         },
@@ -422,12 +426,14 @@ function (dojo, declare) {
                 target_player_id: targetPlayerId
             }).then(() => {
                 this.clearSelection();
+                this.unselectAllCards();
             });
         },
         
         cancelCardSelection: function() {
             // Refresh action buttons to default state
             this.clearSelection();
+            this.unselectAllCards();
             this.statusBar.removeActionButtons()
             this.onUpdateActionButtons('playerTurn', this.gamedatas.actionArgs);
         },

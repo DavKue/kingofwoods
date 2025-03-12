@@ -84,9 +84,9 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* .stockitem_selected {
-	border: 2px solid red ! important;
-} */
+.stockitem_selected {
+	border: 3px solid blue ! important;
+}
 
 .stockitem.delayed-appearance {
     opacity: 0;
