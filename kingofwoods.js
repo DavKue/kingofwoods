@@ -46,7 +46,6 @@ function (dojo, declare) {
                 'Backside': 12
             };
             this.slideDuration = 500;
-            this.selectedCardId = null;
 
         },
         
@@ -410,14 +409,9 @@ function (dojo, declare) {
         onCardClick: function(cardId) {
             // Clear previous buttons
             this.statusBar.removeActionButtons()
-            
-            if (!this.selectedCardId) {
-                // First selection - show player targets
-                this.selectedCardId = cardId;
-                const cardStock = this.findCardStock(cardId);
-                cardStock.selectItem(cardId);
-                this.showPlayerTargets(cardId);
-            }
+            const cardStock = this.findCardStock(cardId);
+            cardStock.selectItem(cardId);
+            this.showPlayerTargets(cardId);
         },
 
         confirmCardPlay: function(cardId, targetPlayerId) {
@@ -426,20 +420,18 @@ function (dojo, declare) {
                 target_player_id: targetPlayerId
             }).then(() => {
                 this.clearSelection();
-                this.unselectAllCards();
             });
         },
         
         cancelCardSelection: function() {
             // Refresh action buttons to default state
             this.clearSelection();
-            this.unselectAllCards();
             this.statusBar.removeActionButtons()
             this.onUpdateActionButtons('playerTurn', this.gamedatas.actionArgs);
         },
         
         clearSelection: function() {
-            this.selectedCardId = null;
+            this.unselectAllCards();
             this.statusBar.removeActionButtons()
         },
 
