@@ -47,7 +47,11 @@ function (dojo, declare) {
             };
             this.slideDuration = 500;
             this.selectedCardId = null;
-
+            this.actionContext = {
+                cardId: null,
+                targetPlayerId: null,
+                targetCourt: null
+            };
         },
         
         /*
@@ -232,45 +236,7 @@ function (dojo, declare) {
             });
         },
 
-        configureStock: function(stock) {
-            stock.setSelectionAppearance('none');
-            stock.image_items_per_row = 4;
-            stock.item_image_url = g_gamethemeurl + 'img/KotW_Cards_Spreadsheet.jpg';
-            
-            // Calculate scaled dimensions
-            const cardScale = 0.20; // Start with 30% size
-            const baseCardWidth = 768;
-            const baseCardHeight = 1181;
-            const baseSpriteWidth = 3072;
-            const baseSpriteHeight = 3543;
-            const scaledCardWidth = baseCardWidth * cardScale;
-            const scaledCardHeight = baseCardHeight * cardScale;
-            const scaledSpriteWidth = baseSpriteWidth * cardScale;
-            const scaledSpriteHeight = baseSpriteHeight * cardScale;
-            // Resize stock items
-            stock.resizeItems(
-                scaledCardWidth,                   // Display width
-                scaledCardHeight,                  // Display height
-                scaledSpriteWidth,            // Original sprite width
-                scaledSpriteHeight            // Original sprite height
-            );
-
-
-            // Add card types to each stock
-            Object.entries(this.cardTypeMap).forEach(([name, typeId]) => {
-                stock.addItemType(
-                    typeId,
-                    1, // Weight
-                    stock.item_image_url,
-                    typeId - 1 // Position index
-                );
-            });
-
-            stock.setSelectionMode(1); // Allow single selection
-            stock.setSelectionAppearance( 'class' );
-            stock.ownerPlayerId = parseInt(stock.container_div.id.split('-')[1], 10);
-            dojo.connect(stock, 'onChangeSelection', this, 'onCardSelection');
-
+        cardInformation: function () {
             cardInformation = {
                 'Assassin': {
                     'type' : 1,
@@ -345,7 +311,49 @@ function (dojo, declare) {
                     'text' : _("This is the backside of the card. What could be behind it?"),
                 },
             };
+            return cardInformation;
+        },
 
+        configureStock: function(stock) {
+            stock.setSelectionAppearance('none');
+            stock.image_items_per_row = 4;
+            stock.item_image_url = g_gamethemeurl + 'img/KotW_Cards_Spreadsheet.jpg';
+            
+            // Calculate scaled dimensions
+            const cardScale = 0.20; // Start with 30% size
+            const baseCardWidth = 768;
+            const baseCardHeight = 1181;
+            const baseSpriteWidth = 3072;
+            const baseSpriteHeight = 3543;
+            const scaledCardWidth = baseCardWidth * cardScale;
+            const scaledCardHeight = baseCardHeight * cardScale;
+            const scaledSpriteWidth = baseSpriteWidth * cardScale;
+            const scaledSpriteHeight = baseSpriteHeight * cardScale;
+            // Resize stock items
+            stock.resizeItems(
+                scaledCardWidth,                   // Display width
+                scaledCardHeight,                  // Display height
+                scaledSpriteWidth,            // Original sprite width
+                scaledSpriteHeight            // Original sprite height
+            );
+
+
+            // Add card types to each stock
+            Object.entries(this.cardTypeMap).forEach(([name, typeId]) => {
+                stock.addItemType(
+                    typeId,
+                    1, // Weight
+                    stock.item_image_url,
+                    typeId - 1 // Position index
+                );
+            });
+
+            stock.setSelectionMode(1); // Allow single selection
+            stock.setSelectionAppearance( 'class' );
+            stock.ownerPlayerId = parseInt(stock.container_div.id.split('-')[1], 10);
+            dojo.connect(stock, 'onChangeSelection', this, 'onCardSelection');
+
+            cardInformation = this.cardInformation();
             stock.onItemCreate = (itemDiv, itemType, itemId) => {
                 const cardType = Object.keys(this.cardTypeMap).find(
                     key => this.cardTypeMap[key] === itemType
@@ -521,14 +529,106 @@ function (dojo, declare) {
         },
 
         confirmCardPlay: function(cardId, targetPlayerId) {
-            this.bgaPerformAction("actPlayCard", {
-                card_id: cardId,
-                target_player_id: targetPlayerId
-            }).then(() => {
-                this.clearSelection();
-            });
+            const cardType = this.getCardType(cardId);
+    
+            if (cardType === 'Assassin') {
+                // Get target court cards
+                const targetCourt = this.playerStocks[targetPlayerId].court;
+                const validTargets = this.getValidAssassinTargets(targetCourt);
+                
+                if (validTargets.length === 0) {
+                    this.showMessage(_("No valid targets in this court"), "error");
+                    return;
+                }
+                
+                // Store selection context
+                this.actionContext = {
+                    cardId: cardId,
+                    targetPlayerId: targetPlayerId,
+                    targetCourt: targetCourt
+                };
+                
+                // Show target selection
+                this.showTargetCards(validTargets);
+            } else {
+                //normal card play
+                this.bgaPerformAction("actPlayCard", {
+                    card_id: cardId,
+                    target_player_id: targetPlayerId,
+                    covered_card: null
+                }).then(() => {
+                    this.clearSelection();
+                });
+            }
         },
         
+        // New method to get valid targets
+        getValidAssassinTargets: function(targetCourt) {
+            const cards = targetCourt.getAllItems();
+            const positions = {};
+            console.log('Cards:', cards);
+            // Find top cards in each position
+            cards.forEach(card => {
+                if (!positions[card.location] || card.stack_position > positions[card.location].stack_position) {
+                    positions[card.location] = card;
+                }
+            });
+            
+            const validCards = Object.values(positions);
+            
+            // Check for Guards
+            const guards = validCards.filter(card => 
+                this.getCardType(card.id) === 'Guard'
+            );
+            
+            return guards.length > 0 ? guards : validCards;
+        },
+
+        // New method to show target cards
+        showTargetCards: function(targetCards) {
+            this.statusBar.removeActionButtons()
+            cardInformation = this.cardInformation();
+            // Add target buttons
+            targetCards.forEach(targetCard => {
+                const cardType = this.getCardType(targetCard.id);
+                this.statusBar.addActionButton(
+                    cardInformation[cardType].name,
+                    () => this.finalizeAssassinPlay(targetCard.id),
+                    { 
+                        color: '#ff0000',
+                        extraClasses: 'target-card-btn'
+                    }
+                );
+            });
+            
+            // Add cancel button
+            this.statusBar.addActionButton(
+                _("Cancel"),
+                () => this.cancelCardSelection(),
+                { color: 'secondary' }
+            );
+        },
+
+        // Final action handler
+        finalizeAssassinPlay: function(coveredCardId) {
+            console.log('Covered Card', coveredCardId);
+            const ctx = this.actionContext;
+            this.bgaPerformAction("actPlayCard", {
+                card_id: ctx.cardId,
+                target_player_id: ctx.targetPlayerId,
+                covered_card: coveredCardId
+            }).then(() => {
+                this.clearSelection();
+                delete this.actionContext;
+            });
+        },
+
+        // Helper to get card type
+        getCardType: function(cardId) {
+            const card = this.gamedatas.cards.find(c => c.card_id == cardId);
+            return card?.card_type || 'Backside';
+        },
+
         cancelCardSelection: function() {
             // Refresh action buttons to default state
             this.clearSelection();

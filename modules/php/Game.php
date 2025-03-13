@@ -79,11 +79,11 @@ class Game extends \Table
      *
      * @throws BgaUserException
      */
-    public function actPlayCard(int $card_id, int $target_player_id): void
+    public function actPlayCard(int $card_id, int $target_player_id, int $covered_card): void
     {
-        $this->dump('####### Card ID ######', $card_id);
-        $this->dump('####### TARGET ID ######', $target_player_id);
+        if (isset($covered_card)) {
 
+        }
         // Retrieve the active player ID.
         $player_id = (int)$this->getActivePlayerId();
 
