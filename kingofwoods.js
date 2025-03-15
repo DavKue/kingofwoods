@@ -555,7 +555,7 @@ function (dojo, declare) {
                 this.bgaPerformAction("actPlayCard", {
                     card_id: cardId,
                     target_player_id: targetPlayerId,
-                    covered_card: null
+                    covered_card: 0
                 }).then(() => {
                     this.clearSelection();
                 });
@@ -569,7 +569,7 @@ function (dojo, declare) {
             console.log('Cards:', cards);
             // Find top cards in each position
             cards.forEach(card => {
-                if (!positions[card.location] || card.stack_position > positions[card.location].stack_position) {
+                if (!positions[card.location] || card.stack_position > 0) {
                     positions[card.location] = card;
                 }
             });
@@ -586,6 +586,7 @@ function (dojo, declare) {
 
         // New method to show target cards
         showTargetCards: function(targetCards) {
+            console.log('Target Cards:', targetCards);
             this.statusBar.removeActionButtons()
             cardInformation = this.cardInformation();
             // Add target buttons
@@ -693,6 +694,15 @@ function (dojo, declare) {
                     notif.args.cards : 
                     [notif.args.cards];
                 
+                    allCards = this.gamedatas.cards;
+                    notif.args.cards.forEach(updatedCard => {
+                        const index = allCards.findIndex(c => c.card_id === updatedCard.card_id);
+                        if (index !== -1) {
+                            allCards[index] = updatedCard;
+                        }
+                    });
+                    this.gamedatas.cards = allCards;
+
                 this.updateCardDisplay(cards);
             });
             this.notifqueue.setSynchronous('cardMoved', 500);

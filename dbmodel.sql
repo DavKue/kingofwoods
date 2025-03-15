@@ -38,5 +38,5 @@ CREATE TABLE IF NOT EXISTS `cards` (
   `card_type` VARCHAR(255) NOT NULL,
   `card_location` VARCHAR(255) NOT NULL,
   `card_owner` VARCHAR(255) NOT NULL,
-  `stack_position` INT(255) DEFAULT 1
+  `ontop_of` INT(255) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
