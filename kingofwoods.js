@@ -398,18 +398,17 @@ function (dojo, declare) {
                 if (card.card_location == 'court' && card.card_type == 'Assassin') {
                     if (fromStock && fromStock !== toStock) {
                         this.slideToObject( $(`${fromStock.container_div.id}_item_${card.card_id}`), `${toStock.container_div.id}_item_${card.ontop_of}`,  this.slideDuration).play();
-                        setTimeout(function() {
+                        setTimeout(() => {
+                            this.createAssassinElement(card.card_id);
+                            this.positionAssassin(card.card_id, card.ontop_of);
                             fromStock.removeFromStockById(
                                 card.card_id, 
                             );
-                            this.createAssassinElement(card.card_id);
-                            this.positionAssassin(card.card_id, card.ontop_of);
                         }, this.slideDuration);
                     } else {
                         this.createAssassinElement(card.card_id);
                         this.positionAssassin(card.card_id, card.ontop_of);
                     }
-
                     return;
                 }
 
@@ -498,6 +497,7 @@ function (dojo, declare) {
 
         //manage Assassin Cards ontop of other cards:
         createAssassinElement: function(cardId) {
+            console.log('Markpoint 1');
             const assassinTypeId = this.cardTypeMap['Assassin'];
             const assassinIndex = assassinTypeId - 1; // Get 0-based index
             
@@ -508,6 +508,8 @@ function (dojo, declare) {
             const xPercent = (col / (imageItemsPerRow - 1)) * 100;
             const yPercent = (row / 2) * 100; // 3 rows total (0-2)
         
+            console.log('Markpoint 2');
+
             const div = document.createElement('div');
             div.id = `assassin_${cardId}`;
             div.className = 'assassin-overlay';
@@ -524,6 +526,8 @@ function (dojo, declare) {
             // Add to game area
             document.getElementById('game_play_area').appendChild(div);
             
+            console.log('Markpoint 3');
+
             // Initialize state tracking
             this.gamedatas.assassins = this.gamedatas.assassins || {};
             this.gamedatas.assassins[cardId] = {
@@ -531,6 +535,8 @@ function (dojo, declare) {
                 coveredCardId: null,
                 targetPlayerId: null
             };
+
+            console.log('Markpoint 4');
 
             // // Add tooltip
             cardInformation = this.cardInformation();
@@ -545,6 +551,8 @@ function (dojo, declare) {
             `;
             this.addTooltip(div.id, tooltipHTML);
             
+            console.log('Markpoint 5', div);
+
             return div;
         },
     positionAssassin: function(assassinId, coveredCardId) {
