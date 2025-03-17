@@ -497,7 +497,6 @@ function (dojo, declare) {
 
         //manage Assassin Cards ontop of other cards:
         createAssassinElement: function(cardId) {
-            console.log('Markpoint 1');
             const assassinTypeId = this.cardTypeMap['Assassin'];
             const assassinIndex = assassinTypeId - 1; // Get 0-based index
             
@@ -507,8 +506,6 @@ function (dojo, declare) {
             const row = Math.floor(assassinIndex / imageItemsPerRow);
             const xPercent = (col / (imageItemsPerRow - 1)) * 100;
             const yPercent = (row / 2) * 100; // 3 rows total (0-2)
-        
-            console.log('Markpoint 2');
 
             const div = document.createElement('div');
             div.id = `assassin_${cardId}`;
@@ -525,8 +522,6 @@ function (dojo, declare) {
             
             // Add to game area
             document.getElementById('game_play_area').appendChild(div);
-            
-            console.log('Markpoint 3');
 
             // Initialize state tracking
             this.gamedatas.assassins = this.gamedatas.assassins || {};
@@ -535,8 +530,6 @@ function (dojo, declare) {
                 coveredCardId: null,
                 targetPlayerId: null
             };
-
-            console.log('Markpoint 4');
 
             // // Add tooltip
             cardInformation = this.cardInformation();
@@ -550,8 +543,6 @@ function (dojo, declare) {
                 </div>
             `;
             this.addTooltip(div.id, tooltipHTML);
-            
-            console.log('Markpoint 5', div);
 
             return div;
         },
@@ -698,18 +689,9 @@ function (dojo, declare) {
         
         // New method to get valid targets
         getValidAssassinTargets: function(targetCourt) {
-            const cards = targetCourt.getAllItems();
-            const positions = {};
-            console.log('Cards:', cards);
-            // Find top cards in each position
-            cards.forEach(card => {
-                if (!positions[card.location] || card.stack_position > 0) {
-                    positions[card.location] = card;
-                }
-            });
-            
-            const validCards = Object.values(positions);
-            
+            const playerCards = targetCourt.getAllItems();
+            const validCards = Object.values(playerCards);
+
             // Check for Guards
             const guards = validCards.filter(card => 
                 this.getCardType(card.id) === 'Guard'
@@ -720,20 +702,38 @@ function (dojo, declare) {
 
         // New method to show target cards
         showTargetCards: function(targetCards) {
-            console.log('Target Cards:', targetCards);
             this.statusBar.removeActionButtons()
+            coveredCards = [];
+            Object.values(this.gamedatas.assassins).forEach(assassin => {
+                coveredCards.push(assassin.coveredCardId);
+            });
+            console.log('Covered Cards:', coveredCards);
             cardInformation = this.cardInformation();
             // Add target buttons
             targetCards.forEach(targetCard => {
+                const killAssassin = _('Kill Assassin');
                 const cardType = this.getCardType(targetCard.id);
-                this.statusBar.addActionButton(
-                    cardInformation[cardType].name,
-                    () => this.finalizeAssassinPlay(targetCard.id),
-                    { 
-                        color: '#ff0000',
-                        extraClasses: 'target-card-btn'
-                    }
-                );
+                covered = false;
+                if (coveredCards.includes(targetCard.id)) {
+                    this.statusBar.addActionButton(
+                        cardInformation[cardType].name + ' (' + killAssassin + ')',
+                        () => this.finalizeAssassinPlay(targetCard.id),
+                        { 
+                            color: '#ff0000',
+                            extraClasses: 'target-card-btn'
+                        }
+                    );
+                } else {
+                    this.statusBar.addActionButton(
+                        cardInformation[cardType].name,
+                        () => this.finalizeAssassinPlay(targetCard.id),
+                        { 
+                            color: '#ff0000',
+                            extraClasses: 'target-card-btn'
+                        }
+                    );
+                }
+
             });
             
             // Add cancel button
@@ -746,7 +746,6 @@ function (dojo, declare) {
 
         // Final action handler
         finalizeAssassinPlay: function(coveredCardId) {
-            console.log('Covered Card', coveredCardId);
             const ctx = this.actionContext;
             this.bgaPerformAction("actPlayCard", {
                 card_id: ctx.cardId,
