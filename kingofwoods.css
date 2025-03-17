@@ -105,6 +105,23 @@
     transform: none !important;
 }
 
+.assassin-overlay {
+    position: absolute;
+    z-index: 2;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    image-rendering: -webkit-optimize-contrast;
+    transform-origin: bottom center;
+    border-radius: 12px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.assassin-overlay:hover {
+    transform: translateY(20px) scale(.9);
+    z-index: 3;
+}
+
 /* Spacing between player areas */
 #player-tables > .player-board:not(:last-child) {
     margin-bottom: 40px;

@@ -52,6 +52,18 @@ function (dojo, declare) {
                 targetPlayerId: null,
                 targetCourt: null
             };
+
+            this.cardScale = 0.20; // Start with 30% size
+            this.baseCardWidth = 768;
+            this.baseCardHeight = 1181;
+            this.baseSpriteWidth = 3072;
+            this.baseSpriteHeight = 3543;
+            this.scaledCardWidth = this.baseCardWidth * this.cardScale;
+            this.scaledCardHeight = this.baseCardHeight * this.cardScale;
+            this.scaledSpriteWidth = this.baseSpriteWidth * this.cardScale;
+            this.scaledSpriteHeight = this.baseSpriteHeight * this.cardScale;
+
+            setInterval(() => this.syncAssassinPositions(), 1000);
         },
         
         /*
@@ -319,22 +331,12 @@ function (dojo, declare) {
             stock.image_items_per_row = 4;
             stock.item_image_url = g_gamethemeurl + 'img/KotW_Cards_Spreadsheet.jpg';
             
-            // Calculate scaled dimensions
-            const cardScale = 0.20; // Start with 30% size
-            const baseCardWidth = 768;
-            const baseCardHeight = 1181;
-            const baseSpriteWidth = 3072;
-            const baseSpriteHeight = 3543;
-            const scaledCardWidth = baseCardWidth * cardScale;
-            const scaledCardHeight = baseCardHeight * cardScale;
-            const scaledSpriteWidth = baseSpriteWidth * cardScale;
-            const scaledSpriteHeight = baseSpriteHeight * cardScale;
             // Resize stock items
             stock.resizeItems(
-                scaledCardWidth,                   // Display width
-                scaledCardHeight,                  // Display height
-                scaledSpriteWidth,            // Original sprite width
-                scaledSpriteHeight            // Original sprite height
+                this.scaledCardWidth,                   // Display width
+                this.scaledCardHeight,                  // Display height
+                this.scaledSpriteWidth,            // Original sprite width
+                this.scaledSpriteHeight            // Original sprite height
             );
 
 
@@ -392,6 +394,26 @@ function (dojo, declare) {
 
                 if (!toStock) return;
 
+                // Manage Assassin-Play
+                if (card.card_location == 'court' && card.card_type == 'Assassin') {
+                    if (fromStock && fromStock !== toStock) {
+                        this.slideToObject( $(`${fromStock.container_div.id}_item_${card.card_id}`), `${toStock.container_div.id}_item_${card.ontop_of}`,  this.slideDuration).play();
+                        setTimeout(function() {
+                            fromStock.removeFromStockById(
+                                card.card_id, 
+                            );
+                            this.createAssassinElement(card.card_id);
+                            this.positionAssassin(card.card_id, card.ontop_of);
+                        }, this.slideDuration);
+                    } else {
+                        this.createAssassinElement(card.card_id);
+                        this.positionAssassin(card.card_id, card.ontop_of);
+                    }
+
+                    return;
+                }
+
+                //Regular Cards
                 if (fromStock && fromStock !== toStock) {
                     toStock.addToStockWithId(
                         typeId,
@@ -472,6 +494,110 @@ function (dojo, declare) {
                 stocks.court.unselectAll();
             }
         },
+
+
+        //manage Assassin Cards ontop of other cards:
+        createAssassinElement: function(cardId) {
+            const assassinTypeId = this.cardTypeMap['Assassin'];
+            const assassinIndex = assassinTypeId - 1; // Get 0-based index
+            
+            // Calculate background position percentages
+            const imageItemsPerRow = 4;
+            const col = assassinIndex % imageItemsPerRow;
+            const row = Math.floor(assassinIndex / imageItemsPerRow);
+            const xPercent = (col / (imageItemsPerRow - 1)) * 100;
+            const yPercent = (row / 2) * 100; // 3 rows total (0-2)
+        
+            const div = document.createElement('div');
+            div.id = `assassin_${cardId}`;
+            div.className = 'assassin-overlay';
+            
+            // Set dimensions matching scaled cards
+            div.style.width = `${this.scaledCardWidth}px`;
+            div.style.height = `${this.scaledCardHeight}px`;
+            
+            // Configure spritesheet background
+            div.style.backgroundImage = `url(${g_gamethemeurl}img/KotW_Cards_Spreadsheet.jpg)`;
+            div.style.backgroundSize = `${this.scaledSpriteWidth}px ${this.scaledSpriteHeight}px`;
+            div.style.backgroundPosition = `${xPercent}% ${yPercent}%`;
+            
+            // Add to game area
+            document.getElementById('game_play_area').appendChild(div);
+            
+            // Initialize state tracking
+            this.gamedatas.assassins = this.gamedatas.assassins || {};
+            this.gamedatas.assassins[cardId] = {
+                div: div,
+                coveredCardId: null,
+                targetPlayerId: null
+            };
+
+            // // Add tooltip
+            cardInformation = this.cardInformation();
+            const tooltipHTML = `
+                <div class="card-tooltip">
+                    <div class="tooltip-header">
+                        <strong>${cardInformation['Assassin'].name}</strong>
+                        <div class="influence">Influence: ${cardInformation['Assassin'].influence}</div>
+                    </div>
+                    <div class="tooltip-text">${cardInformation['Assassin'].text}</div>
+                </div>
+            `;
+            this.addTooltip(div.id, tooltipHTML);
+            
+            return div;
+        },
+    positionAssassin: function(assassinId, coveredCardId) {
+        const assassin = this.gamedatas.assassins[assassinId];
+        if (!assassin || !coveredCardId) return;
+
+        // Find the covered card element
+        const coveredStock = this.findCardStock(coveredCardId);
+        if (!coveredStock) {
+            console.warn('Covered card not found yet, retrying...');
+            setTimeout(() => this.positionAssassin(assassinId, coveredCardId), 100);
+            return;
+        }
+
+        const coveredDiv = $(`${coveredStock.container_div.id}_item_${coveredCardId}`);
+        if (!coveredDiv) return;
+
+        // Get position relative to game area
+        const gameArea = document.getElementById('game_play_area');
+        const gameAreaRect = gameArea.getBoundingClientRect();
+        const coveredRect = coveredDiv.getBoundingClientRect();
+
+        // Calculate relative position
+        const posX = coveredRect.left - gameAreaRect.left;
+        const posY = coveredRect.top - gameAreaRect.top;
+
+        // Position assassin with offset
+        dojo.style(assassin.div, {
+            left: `${posX + 0}px`,
+            top: `${posY + 0}px`,
+            position: 'absolute'
+        });
+
+        // Store reference to covered card
+        assassin.coveredCardId = coveredCardId;
+        assassin.targetPlayerId = coveredStock.ownerPlayerId;
+
+        this.gamedatas.assassins[assassinId] = assassin;
+    },
+    syncAssassinPositions: function() {
+        Object.entries(this.gamedatas.assassins || {}).forEach(([assassinId, assassin]) => {
+            if (assassin.coveredCardId) {
+                // Find current position of covered card
+                const coveredStock = this.findCardStock(assassin.coveredCardId);
+                if (coveredStock) {
+                    const coveredDiv = $(`${coveredStock.container_div.id}_item_${assassin.coveredCardId}`);
+                    if (coveredDiv) {
+                        this.positionAssassin(assassinId, assassin.coveredCardId);
+                    }
+                }
+            }
+        });
+    },
 
         ///////////////////////////////////////////////////
         //// Player's action
