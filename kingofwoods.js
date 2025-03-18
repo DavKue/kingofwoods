@@ -121,6 +121,8 @@ function (dojo, declare) {
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
 
+            this.gamedatas.assassins = this.gamedatas.assassins || {};
+
             console.log( "Ending game setup" );
         },
        
@@ -450,6 +452,27 @@ function (dojo, declare) {
             });
         },
         
+        assassinKill: function(killer, victim) {
+            Object.entries(this.gamedatas.cards).forEach(([key, card]) => {
+                if (card.card_id == killer || card.card_id == victim) {
+                    this.gamedatas.cards[key].card_location = 'aside';
+                    this.gamedatas.cards[key].card_owner = 'noPlayerID';
+                    this.gamedatas.cards[key].ontop_of = 0;
+                }
+            }); 
+            const fromStock = this.findCardStock(killer);
+            this.slideToObject( $(`${fromStock.container_div.id}_item_${killer}`), `assassin_${victim}`,  this.slideDuration).play();
+            setTimeout(function() {
+                fromStock.removeFromStockById(
+                    killer, 
+                );
+                dojo.destroy(`assassin_${victim}`);
+            }, this.slideDuration);
+
+            console.log('ASSASSINS:', this.gamedatas.assassins);
+            delete this.gamedatas.assassins[victim];
+        },
+
         findCardStock: function(cardId) {
             const searchId = String(cardId);
             
@@ -716,7 +739,6 @@ function (dojo, declare) {
             Object.values(this.gamedatas.assassins).forEach(assassin => {
                 coveredCards.push(assassin.coveredCardId);
             });
-            console.log('Covered Cards:', coveredCards);
             cardInformation = this.cardInformation();
             // Add target buttons
             targetCards.forEach(targetCard => {
@@ -848,6 +870,13 @@ function (dojo, declare) {
                 this.updateCardDisplay(cards);
             });
             this.notifqueue.setSynchronous('cardMoved', 500);
+
+            dojo.subscribe('assassinKill', this, notif => {
+                const killer = notif.args.killer.toString();
+                const victim = notif.args.victim.toString();
+                this.assassinKill(killer, victim);
+            });
+            this.notifqueue.setSynchronous('assassinKill', 500);
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods

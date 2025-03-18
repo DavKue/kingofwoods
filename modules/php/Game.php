@@ -104,7 +104,30 @@ class Game extends \Table
         if ($covered_card == 0) {
             $this->DbQuery("UPDATE cards SET card_owner = $target_player_id, card_location = 'court' WHERE card_id = '$card_id'");
         } else {
-            $this->DbQuery("UPDATE cards SET card_owner = $target_player_id, card_location = 'court', ontop_of =  $covered_card WHERE card_id = '$card_id'");
+            //assassin-play
+            $sql2 = "SELECT * FROM cards WHERE card_owner = $target_player_id";
+            $targetCards = $this->getCollectionFromDB($sql2);
+            $alreadyCovered = false;
+            $otherAssassinID = false;
+            foreach ($targetCards as $card) {
+                if ($card['ontop_of'] == $covered_card) {
+                    $alreadyCovered = true;
+                    $otherAssassinID = $card['card_id'];
+                }
+            }
+
+            if ($alreadyCovered === false) {
+                $this->DbQuery("UPDATE cards SET card_owner = $target_player_id, card_location = 'court', ontop_of = $covered_card WHERE card_id = '$card_id'");
+            } else {
+                $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID', card_location = 'aside', ontop_of = 0 WHERE card_id = '$card_id'");
+                $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID', card_location = 'aside', ontop_of = 0 WHERE card_id = '$otherAssassinID'");
+                $assassinKill = [
+                    'killer' => $card_id,
+                    'victim' => $otherAssassinID,
+                ];
+                $this->notify->all("assassinKill", '', $assassinKill);
+            }
+            
         }
 
         // Notify all players about the card played.
