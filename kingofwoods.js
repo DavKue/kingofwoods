@@ -372,6 +372,15 @@ function (dojo, declare) {
                         </div>
                     `;
                     this.addTooltip(itemDiv.id, tooltipHTML);
+
+                    //add Card-Names
+                    // if (cardType != 'Backside') {
+                    //     const textDiv = document.createElement('div');
+                    //     textDiv.className = 'card-text';
+                    //     textDiv.innerHTML = cardInformation[cardType].name;
+                    //     itemDiv.appendChild(textDiv);
+                    // }
+
                 }
             };
 

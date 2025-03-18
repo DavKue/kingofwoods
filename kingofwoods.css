@@ -105,6 +105,18 @@
     transform: none !important;
 }
 
+.card-text {
+    position: absolute;
+    top: 12%;
+    left: 0;
+    width: 100%;
+    transform: translateY(-50%);
+    text-align: center;
+    pointer-events: none;
+    font-size: 12px;
+    padding: 0 8px;
+  }
+
 .assassin-overlay {
     position: absolute;
     z-index: 2;
