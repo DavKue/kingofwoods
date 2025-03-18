@@ -719,20 +719,25 @@ function (dojo, declare) {
             }
         },
         
-        // New method to get valid targets
         getValidAssassinTargets: function(targetCourt) {
             const playerCards = targetCourt.getAllItems();
             const validCards = Object.values(playerCards);
-
-            // Check for Guards
-            const guards = validCards.filter(card => 
-                this.getCardType(card.id) === 'Guard'
-            );
             
+            // Get all covered card IDs
+            const coveredCards = new Set(
+                Object.values(this.gamedatas.assassins || {}).map(a => a.coveredCardId)
+            );
+
+            // Find uncovered Guards
+            const guards = validCards.filter(card => 
+                this.getCardType(card.id) === 'Guard' && 
+                !coveredCards.has(card.id.toString()) // Convert to string for consistent comparison
+            );
+            console.log('Guards after:', guards);
+
             return guards.length > 0 ? guards : validCards;
         },
 
-        // New method to show target cards
         showTargetCards: function(targetCards) {
             this.statusBar.removeActionButtons()
             coveredCards = [];
