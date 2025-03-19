@@ -156,6 +156,65 @@ class Game extends \Table
         $this->gamestate->nextState("playCard");
     }
 
+    public function actSelectionKnight(int $card_id): void
+    {
+        // Retrieve the active player ID.
+        $player_id = (int)$this->getActivePlayerId();
+
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetPlayer'"
+        );
+        $targetPlayer = json_decode($data['targetPlayer']['value'], true);
+            
+        $sql = "SELECT * FROM cards WHERE card_owner = $targetPlayer";
+        $cards = $this->getCollectionFromDB($sql);
+
+        // check input values (and find card name)
+        $card_name = 'unknown';
+        $validCard = false;
+        foreach ($cards as $card) {
+            if ($card['card_id'] == $card_id) {
+                $card_name = $card['card_type'];
+                $validCard = true;
+            }
+        }
+
+        if ($validCard == false) {
+            throw new \BgaUserException('Invalid card choice');
+        }
+
+        $this->DbQuery("UPDATE cards SET card_owner = $player_id, card_location = 'hand', ontop_of = 0 WHERE card_id = '$card_id'");
+        $res = json_encode('noPlayerID');
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+        );
+        $this->notify->all('targetPlayer', '', ['noPlayerID'] );
+
+        // Notify all players about the card played.
+        $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
+        $players = $this->loadPlayersBasicInfos();
+        foreach ($players as $thisPlayer_id => $info) {
+            $hiddenCards = $allCards;
+            foreach ($allCards as $index => $card) {
+                if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
+            }
+
+            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Knight-Effect: ${player_name} took a ${card_name} from the hand of ${target_player}'), [
+                "cards" => array_values($hiddenCards),
+                "player_id" => $player_id,
+                "player_name" => $this->getActivePlayerName(),
+                "target_player" => $this->getPlayerNameById($targetPlayer),
+                "card_name" => $card_name,
+                "card_id" => $card_id,
+                "i18n" => ['card_name'],
+            ]);
+        }
+
+        $this->gamestate->nextState("playCard");
+    }
+
     /**
      * Game state arguments, example content.
      *
@@ -275,9 +334,10 @@ class Game extends \Table
             "SELECT * FROM ingame WHERE name = 'targetPlayer'"
         );
         $targetPlayer = json_decode($data['targetPlayer']['value'], true);
+        $this->notify->all('targetPlayer', '', $targetPlayer );
 
         // Notify active player about hand cards.
-        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$targetPlayer'");
+        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_owner = '$targetPlayer'");
         $this->notify->player($player_id,"cardMoved", '', [
             "cards" => array_values($cardNofif),
         ]);
@@ -340,6 +400,7 @@ class Game extends \Table
             "SELECT * FROM ingame WHERE name = 'targetPlayer'"
         );
         $targetPlayer = json_decode($data['targetPlayer']['value'], true);
+        $result['targetPlayer'] = $targetPlayer;
 
         $gamestate = $this->gamestate->state();
 
@@ -355,7 +416,6 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-
         }
         $result['cards'] = array_values($hiddenCards);
 

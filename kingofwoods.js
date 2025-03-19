@@ -447,7 +447,6 @@ function (dojo, declare) {
                         card.card_id.toString(),
                     );
                 }
-
     
             });
         },
@@ -679,6 +678,11 @@ function (dojo, declare) {
 
             this.statusBar.removeActionButtons()
 
+            if (this.gamedatas.gamestate.name == 'selectionKnight') {
+                this.knightPlayCard(cardId);
+                return;
+            }
+
             this.selectedCardId = cardId;
             const cardStock = this.findCardStock(cardId);
             cardStock.selectItem(cardId);
@@ -719,6 +723,12 @@ function (dojo, declare) {
             }
         },
         
+        knightPlayCard: function(cardId) {
+            this.bgaPerformAction("actSelectionKnight", {
+                card_id: cardId,
+            });
+        },
+
         getValidAssassinTargets: function(targetCourt) {
             const playerCards = targetCourt.getAllItems();
             const validCards = Object.values(playerCards);
@@ -816,14 +826,22 @@ function (dojo, declare) {
         onEnteringState: function(stateName, args) {
             switch(stateName) {
                 case 'playerTurn':
-                    const currentPlayerStocks = this.playerStocks[this.player_id];
-                    
                     // Enable selection only in current player's hand
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
                         const isActive = this.isCurrentPlayerActive();
                         hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
                         court.setSelectionMode(0); // Never select from courts
+                    });
+                    break;
+                case 'selectionKnight':
+                    // Enable selection only in current player's hand
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        console.log('Hand:', hand);
+                        const isActive = this.isCurrentPlayerActive();
+                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
+                        hand.setSelectionMode(isTargetPlayer && isActive ? 1 : 0);
+                        court.setSelectionMode(0);
                     });
                     break;
             }
@@ -880,6 +898,11 @@ function (dojo, declare) {
                 const killer = notif.args.killer.toString();
                 const victim = notif.args.victim.toString();
                 this.assassinKill(killer, victim);
+            });
+            this.notifqueue.setSynchronous('assassinKill', 500);
+
+            dojo.subscribe('targetPlayer', this, notif => {
+                this.gamedatas.targetPlayer = notif.args;
             });
             this.notifqueue.setSynchronous('assassinKill', 500);
         },  
