@@ -286,7 +286,7 @@ function (dojo, declare) {
                     'type' : 6,
                     'name' : _('Priest'),
                     'influence' : 3,
-                    'text' : _("You may put an additional card to the same court in order to take 1 card with lowerinfl uence from there to your hand (not the Assassin or the Jester)."),
+                    'text' : _("You may put an additional card to the same court in order to take 1 card with lowerinfluence from there to your hand (not the Assassin or the Jester)."),
                 },
                 'Jester': {
                     'type' : 7,

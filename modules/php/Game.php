@@ -144,6 +144,15 @@ class Game extends \Table
         ]);
 
         // at the end of the action, move to the next state
+
+        if ($card_name == 'Knight' && $player_id != $target_player_id) {
+            $res = json_encode($target_player_id);
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+            );
+            $this->gamestate->nextState("playedKnight");
+            return;
+        }
         $this->gamestate->nextState("playCard");
     }
 
@@ -258,6 +267,22 @@ class Game extends \Table
         $this->gamestate->nextState("nextPlayer");
     }
 
+    public function stSelectionKnight(): void{
+        // Retrieve the active player ID.
+        $player_id = (int)$this->getActivePlayerId();
+
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetPlayer'"
+        );
+        $targetPlayer = json_decode($data['targetPlayer']['value'], true);
+
+        // Notify active player about hand cards.
+        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$targetPlayer'");
+        $this->notify->player($player_id,"cardMoved", '', [
+            "cards" => array_values($cardNofif),
+        ]);
+    }
+
     /**
      * Migrate database.
      *
@@ -311,13 +336,26 @@ class Game extends \Table
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetPlayer'"
+        );
+        $targetPlayer = json_decode($data['targetPlayer']['value'], true);
+
+        $gamestate = $this->gamestate->state();
 
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
         $hiddenCards = $allCards;
         foreach ($allCards as $index => $card) {
-            if ($card['card_owner'] != $current_player_id && $card['card_location'] == 'hand') {
-                $hiddenCards[$index]['card_type'] = 'hidden';
+            if ($gamestate['name'] == 'selectionKnight') {
+                if ($card['card_owner'] != $current_player_id && $card['card_owner'] != $targetPlayer && $card['card_location'] == 'hand') {
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
+            } else {
+                if ($card['card_owner'] != $current_player_id && $card['card_location'] == 'hand') {
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
             }
+
         }
         $result['cards'] = array_values($hiddenCards);
 
@@ -371,6 +409,10 @@ class Game extends \Table
         $this->reloadPlayersBasicInfos();
 
         // Init global values with their initial values.
+
+        // Create empty 'targetPlayer'-Entry
+        $sql = "INSERT INTO ingame (name, value) VALUES ('targetPlayer', 'noPlayerID')";
+        $this->DbQuery($sql);
 
         // Dummy content.
         $this->setGameStateInitialValue("my_first_global_variable", 0);
