@@ -150,6 +150,13 @@ class Game extends \Table
             $this->DbQuery(
                 "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
             );
+            $this->notify->all('targetPlayer', '', [$target_player_id] );
+
+            // Notify active player about hand cards.
+            $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_owner = '$target_player_id'");
+            $this->notify->player($player_id,"cardMoved", '', [
+                "cards" => array_values($cardNofif),
+            ]);
             $this->gamestate->nextState("playedKnight");
             return;
         }
@@ -324,23 +331,6 @@ class Game extends \Table
         // Go to another gamestate
         // Here, we would detect if the game is over, and in this case use "endGame" transition instead 
         $this->gamestate->nextState("nextPlayer");
-    }
-
-    public function stSelectionKnight(): void{
-        // Retrieve the active player ID.
-        $player_id = (int)$this->getActivePlayerId();
-
-        $data = $this->getCollectionFromDb(
-            "SELECT * FROM ingame WHERE name = 'targetPlayer'"
-        );
-        $targetPlayer = json_decode($data['targetPlayer']['value'], true);
-        $this->notify->all('targetPlayer', '', $targetPlayer );
-
-        // Notify active player about hand cards.
-        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_owner = '$targetPlayer'");
-        $this->notify->player($player_id,"cardMoved", '', [
-            "cards" => array_values($cardNofif),
-        ]);
     }
 
     /**

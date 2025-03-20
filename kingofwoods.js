@@ -425,6 +425,9 @@ function (dojo, declare) {
 
                 //Regular Cards
                 if (fromStock && fromStock !== toStock) {
+                    console.log('From Stock:', fromStock);
+                    console.log('To Stock:', toStock);
+
                     toStock.addToStockWithId(
                         typeId,
                         card.card_id.toString()
@@ -834,9 +837,9 @@ function (dojo, declare) {
                     });
                     break;
                 case 'selectionKnight':
+                    console.log('Target-Player onEnterState:', this.gamedatas.targetPlayer);
                     // Enable selection only in current player's hand
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        console.log('Hand:', hand);
                         const isActive = this.isCurrentPlayerActive();
                         const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
                         hand.setSelectionMode(isTargetPlayer && isActive ? 1 : 0);
@@ -901,7 +904,9 @@ function (dojo, declare) {
             this.notifqueue.setSynchronous('assassinKill', 500);
 
             dojo.subscribe('targetPlayer', this, notif => {
-                this.gamedatas.targetPlayer = notif.args;
+                console.log('Target-Player notif:', notif.args);
+                this.gamedatas.targetPlayer = notif.args[0];
+                console.log('Target-Player after notif:', this.gamedatas.targetPlayer);
             });
             this.notifqueue.setSynchronous('assassinKill', 500);
         },  

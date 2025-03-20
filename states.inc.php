@@ -100,7 +100,6 @@ $machinestates = [
         "description" => clienttranslate('${actplayer} must choose a card from the selected hand'),
         "descriptionmyturn" => clienttranslate('${you} must choose a card from the selected hand'),
         "type" => "activeplayer",
-        "action" => "stSelectionKnight",
         "possibleactions" => [
             "actSelectionKnight"
         ],
