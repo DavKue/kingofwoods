@@ -63,7 +63,7 @@ function (dojo, declare) {
             this.scaledSpriteWidth = this.baseSpriteWidth * this.cardScale;
             this.scaledSpriteHeight = this.baseSpriteHeight * this.cardScale;
 
-            setInterval(() => this.syncAssassinPositions(), 1000);
+            setInterval(() => this.assassinSyncPositions(), 1000);
         },
         
         /*
@@ -410,15 +410,15 @@ function (dojo, declare) {
                     if (fromStock && fromStock !== toStock) {
                         this.slideToObject( $(`${fromStock.container_div.id}_item_${card.card_id}`), `${toStock.container_div.id}_item_${card.ontop_of}`,  this.slideDuration).play();
                         setTimeout(() => {
-                            this.createAssassinElement(card.card_id);
-                            this.positionAssassin(card.card_id, card.ontop_of);
+                            this.assassinCreateElement(card.card_id);
+                            this.assassinPosition(card.card_id, card.ontop_of);
                             fromStock.removeFromStockById(
                                 card.card_id, 
                             );
                         }, this.slideDuration);
                     } else {
-                        this.createAssassinElement(card.card_id);
-                        this.positionAssassin(card.card_id, card.ontop_of);
+                        this.assassinCreateElement(card.card_id);
+                        this.assassinPosition(card.card_id, card.ontop_of);
                     }
                     return;
                 }
@@ -449,27 +449,6 @@ function (dojo, declare) {
                 }
     
             });
-        },
-        
-        assassinKill: function(killer, victim) {
-            Object.entries(this.gamedatas.cards).forEach(([key, card]) => {
-                if (card.card_id == killer || card.card_id == victim) {
-                    this.gamedatas.cards[key].card_location = 'aside';
-                    this.gamedatas.cards[key].card_owner = 'noPlayerID';
-                    this.gamedatas.cards[key].ontop_of = 0;
-                }
-            }); 
-            const fromStock = this.findCardStock(killer);
-            this.slideToObject( $(`${fromStock.container_div.id}_item_${killer}`), `assassin_${victim}`,  this.slideDuration).play();
-            setTimeout(function() {
-                fromStock.removeFromStockById(
-                    killer, 
-                );
-                dojo.destroy(`assassin_${victim}`);
-            }, this.slideDuration);
-
-            console.log('ASSASSINS:', this.gamedatas.assassins);
-            delete this.gamedatas.assassins[victim];
         },
 
         findCardStock: function(cardId) {
@@ -525,9 +504,29 @@ function (dojo, declare) {
             }
         },
 
+        assassinKill: function(killer, victim) {
+            Object.entries(this.gamedatas.cards).forEach(([key, card]) => {
+                if (card.card_id == killer || card.card_id == victim) {
+                    this.gamedatas.cards[key].card_location = 'aside';
+                    this.gamedatas.cards[key].card_owner = 'noPlayerID';
+                    this.gamedatas.cards[key].ontop_of = 0;
+                }
+            }); 
+            const fromStock = this.findCardStock(killer);
+            this.slideToObject( $(`${fromStock.container_div.id}_item_${killer}`), `assassin_${victim}`,  this.slideDuration).play();
+            setTimeout(function() {
+                fromStock.removeFromStockById(
+                    killer, 
+                );
+                dojo.destroy(`assassin_${victim}`);
+            }, this.slideDuration);
+
+            console.log('ASSASSINS:', this.gamedatas.assassins);
+            delete this.gamedatas.assassins[victim];
+        },
 
         //manage Assassin Cards ontop of other cards:
-        createAssassinElement: function(cardId) {
+        assassinCreateElement: function(cardId) {
             const assassinTypeId = this.cardTypeMap['Assassin'];
             const assassinIndex = assassinTypeId - 1; // Get 0-based index
             
@@ -577,7 +576,7 @@ function (dojo, declare) {
 
             return div;
         },
-    positionAssassin: function(assassinId, coveredCardId) {
+    assassinPosition: function(assassinId, coveredCardId) {
         const assassin = this.gamedatas.assassins[assassinId];
         if (!assassin || !coveredCardId) return;
 
@@ -585,7 +584,7 @@ function (dojo, declare) {
         const coveredStock = this.findCardStock(coveredCardId);
         if (!coveredStock) {
             console.warn('Covered card not found yet, retrying...');
-            setTimeout(() => this.positionAssassin(assassinId, coveredCardId), 100);
+            setTimeout(() => this.assassinPosition(assassinId, coveredCardId), 100);
             return;
         }
 
@@ -614,7 +613,7 @@ function (dojo, declare) {
 
         this.gamedatas.assassins[assassinId] = assassin;
     },
-    syncAssassinPositions: function() {
+    assassinSyncPositions: function() {
         Object.entries(this.gamedatas.assassins || {}).forEach(([assassinId, assassin]) => {
             if (assassin.coveredCardId) {
                 // Find current position of covered card
@@ -622,7 +621,7 @@ function (dojo, declare) {
                 if (coveredStock) {
                     const coveredDiv = $(`${coveredStock.container_div.id}_item_${assassin.coveredCardId}`);
                     if (coveredDiv) {
-                        this.positionAssassin(assassinId, assassin.coveredCardId);
+                        this.assassinPosition(assassinId, assassin.coveredCardId);
                     }
                 }
             }
@@ -695,7 +694,7 @@ function (dojo, declare) {
             if (cardType === 'Assassin') {
                 // Get target court cards
                 const targetCourt = this.playerStocks[targetPlayerId].court;
-                const validTargets = this.getValidAssassinTargets(targetCourt);
+                const validTargets = this.assassinGetValidTargets(targetCourt);
                 
                 if (validTargets.length === 0) {
                     this.showMessage(_("No valid targets in this court"), "error");
@@ -710,7 +709,7 @@ function (dojo, declare) {
                 };
                 
                 // Show target selection
-                this.showTargetCards(validTargets);
+                this.assassinShowTargetCards(validTargets);
             } else {
                 //normal card play
                 this.bgaPerformAction("actPlayCard", {
@@ -729,7 +728,7 @@ function (dojo, declare) {
             });
         },
 
-        getValidAssassinTargets: function(targetCourt) {
+        assassinGetValidTargets: function(targetCourt) {
             const playerCards = targetCourt.getAllItems();
             const validCards = Object.values(playerCards);
             
@@ -748,7 +747,7 @@ function (dojo, declare) {
             return guards.length > 0 ? guards : validCards;
         },
 
-        showTargetCards: function(targetCards) {
+        assassinShowTargetCards: function(targetCards) {
             this.statusBar.removeActionButtons()
             coveredCards = [];
             Object.values(this.gamedatas.assassins).forEach(assassin => {
@@ -763,7 +762,7 @@ function (dojo, declare) {
                 if (coveredCards.includes(targetCard.id)) {
                     this.statusBar.addActionButton(
                         cardInformation[cardType].name + ' (' + killAssassin + ')',
-                        () => this.finalizeAssassinPlay(targetCard.id),
+                        () => this.assassinFinalizePlay(targetCard.id),
                         { 
                             color: '#ff0000',
                             extraClasses: 'target-card-btn'
@@ -772,7 +771,7 @@ function (dojo, declare) {
                 } else {
                     this.statusBar.addActionButton(
                         cardInformation[cardType].name,
-                        () => this.finalizeAssassinPlay(targetCard.id),
+                        () => this.assassinFinalizePlay(targetCard.id),
                         { 
                             color: '#ff0000',
                             extraClasses: 'target-card-btn'
@@ -791,7 +790,7 @@ function (dojo, declare) {
         },
 
         // Final action handler
-        finalizeAssassinPlay: function(coveredCardId) {
+        assassinFinalizePlay: function(coveredCardId) {
             const ctx = this.actionContext;
             this.bgaPerformAction("actPlayCard", {
                 card_id: ctx.cardId,
