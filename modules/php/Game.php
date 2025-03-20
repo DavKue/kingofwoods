@@ -197,27 +197,39 @@ class Game extends \Table
         );
         $this->notify->all('targetPlayer', '', ['noPlayerID'] );
 
-        // Notify all players about the card played.
-        $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
+        //Moved card for all
+        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$card_id'");
         $players = $this->loadPlayersBasicInfos();
         foreach ($players as $thisPlayer_id => $info) {
-            $hiddenCards = $allCards;
-            foreach ($allCards as $index => $card) {
+            $hiddenCards = $cardNofif;
+            foreach ($cardNofif as $index => $card) {
                 if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Knight-Effect: ${player_name} took a ${card_name} from the hand of ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Knight-Effect: ${player_name} took a card from the hand of ${target_player}'), [
                 "cards" => array_values($hiddenCards),
                 "player_id" => $player_id,
                 "player_name" => $this->getActivePlayerName(),
                 "target_player" => $this->getPlayerNameById($targetPlayer),
-                "card_name" => $card_name,
                 "card_id" => $card_id,
                 "i18n" => ['card_name'],
             ]);
         }
+
+
+
+        //Hide Target Players hand
+        $cardNofifActivePlayer = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_owner = '$targetPlayer'");
+        $hiddenCards = $cardNofifActivePlayer;
+        foreach ($cardNofifActivePlayer as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->player($player_id,"cardMoved", '', [
+            "cards" => array_values($hiddenCards),
+        ]);
 
         $this->gamestate->nextState("playCard");
     }

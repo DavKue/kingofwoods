@@ -894,7 +894,7 @@ function (dojo, declare) {
 
                 this.updateCardDisplay(cards);
             });
-            this.notifqueue.setSynchronous('cardMoved', 500);
+            this.notifqueue.setSynchronous('cardMoved', 700);
 
             dojo.subscribe('assassinKill', this, notif => {
                 const killer = notif.args.killer.toString();
