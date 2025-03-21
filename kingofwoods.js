@@ -839,15 +839,24 @@ function (dojo, declare) {
                         hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
                         court.setSelectionMode(0); // Never select from courts
 
+                        //Check mandatory Squire Play
                         const squireIds = hand.items
                         .filter(item => this.getCardType(item.id) === 'Squire')
                         .map(squire => squire.id.toString());
-
                         if (playedSquireIds.length > 0 && squireIds.length > 0) {
                             // Add CSS classes to non-Squires
                             hand.items.forEach(item => {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                 if (!squireIds.includes(item.id.toString())) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                            });
+                        }
+
+                        if (court.items.length < 3) {
+                            hand.items.forEach(item => {
+                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                if (this.getCardType(item.id) === 'Princess') {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
                                 }
                             });
