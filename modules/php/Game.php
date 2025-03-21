@@ -84,23 +84,46 @@ class Game extends \Table
         // Retrieve the active player ID.
         $player_id = (int)$this->getActivePlayerId();
 
-        $sql = "SELECT * FROM cards WHERE card_owner = $player_id";
+        // check if card is a valid pick (and find card name)
+        $sql = "SELECT * FROM cards";
         $cards = $this->getCollectionFromDB($sql);
 
-        // check input values (and find card name)
         $card_name = 'unknown';
-        $validCard = false;
+        $ownedCard = false;
+        $squireInCourt = false;
+        $squireInHand = false;
+        $inCourtAll = 0;
+        $assassinsInCourt = 0;
         foreach ($cards as $card) {
-            if ($card['card_id'] == $card_id) {
+            if ($card['card_id'] == $card_id && $card['card_owner'] == $player_id) {
                 $card_name = $card['card_type'];
-                $validCard = true;
+                $ownedCard = true;
+            }
+            if ($card['card_type'] == 'Squire' && $card['card_location'] == 'court') {
+                $squireInCourt = true;
+            }
+            if ($card['card_type'] == 'Squire' && $card['card_owner'] == $player_id && $card['card_location'] == 'hand') {
+                $squireInHand = true;
+            }
+            if ($card['card_owner'] == $player_id && $card['card_location'] == 'court') {
+                $inCourtAll = $inCourtAll + 1;
+                if ($card['card_type'] == 'Assassin') {
+                    $assassinsInCourt = $assassinsInCourt + 1;
+                }
             }
         }
 
-        if ($validCard == false) {
-            throw new \BgaUserException('Invalid card choice');
+        if ($ownedCard == false) {
+            throw new \BgaUserException('You dont own this card');
+        }
+        if ($squireInCourt === true && $squireInHand === true && $card_name != 'Squire') {
+            throw new \BgaUserException('You have to play a squire');
+        }
+        if ($card_name == 'Princess' && ($inCourtAll - $assassinsInCourt) < 3) {
+            throw new \BgaUserException('You don´t have enough cards in that court to play the princess');
         }
 
+        //Play card
         if ($covered_card == 0) {
             $this->DbQuery("UPDATE cards SET card_owner = $target_player_id, card_location = 'court' WHERE card_id = '$card_id'");
         } else {

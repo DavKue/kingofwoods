@@ -828,12 +828,31 @@ function (dojo, declare) {
         onEnteringState: function(stateName, args) {
             switch(stateName) {
                 case 'playerTurn':
+                    const playedSquireIds = this.gamedatas.cards
+                    .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
+                    .map(squire => squire.card_id.toString());
+
                     // Enable selection only in current player's hand
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
                         const isActive = this.isCurrentPlayerActive();
                         hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
                         court.setSelectionMode(0); // Never select from courts
+
+                        const squireIds = hand.items
+                        .filter(item => this.getCardType(item.id) === 'Squire')
+                        .map(squire => squire.id.toString());
+
+                        if (playedSquireIds.length > 0 && squireIds.length > 0) {
+                            // Add CSS classes to non-Squires
+                            hand.items.forEach(item => {
+                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                if (!squireIds.includes(item.id.toString())) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                            });
+                        }
+
                     });
                     break;
                 case 'selectionKnight':
@@ -872,7 +891,7 @@ function (dojo, declare) {
         },
 
         onLeavingState: function(stateName) {
-            if (stateName === 'selectionKnight') {
+            if (stateName === 'selectionKnight' || stateName === 'playerTurn') {
                 Object.values(this.playerStocks).forEach(({ hand }) => {
                     hand.items.forEach(item => {
                         const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
