@@ -107,6 +107,13 @@
     border: none ! important;
 }
 
+.stockitem_unselectable_singlecard  {
+    cursor: default;
+    filter: none !important;
+    transform: none !important;
+    border: none ! important;
+}
+
 .card-text {
     position: absolute;
     top: 12%;

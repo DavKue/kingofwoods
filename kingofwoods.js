@@ -837,15 +837,48 @@ function (dojo, declare) {
                     });
                     break;
                 case 'selectionKnight':
-                    console.log('Target-Player onEnterState:', this.gamedatas.targetPlayer);
-                    // Enable selection only in current player's hand
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isActive = this.isCurrentPlayerActive();
                         const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
-                        hand.setSelectionMode(isTargetPlayer && isActive ? 1 : 0);
+                        const isActive = this.isCurrentPlayerActive();
+                
+                        if (isTargetPlayer && isActive) {
+                            // Get all Squire IDs
+                            const squireIds = hand.items
+                                .filter(item => this.getCardType(item.id) === 'Squire')
+                                .map(squire => squire.id.toString());
+                
+                            console.log('squire IDs:', squireIds);
+
+                            // Enable selection mode but filter in click handler
+                            hand.setSelectionMode(1);
+                            
+                            if (squireIds.length > 0) {
+                                // Add CSS classes to non-Squires
+                                hand.items.forEach(item => {
+                                    const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                    if (!squireIds.includes(item.id.toString())) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                });
+                            }
+
+                        } else {
+                            hand.setSelectionMode(0);
+                        }
                         court.setSelectionMode(0);
                     });
                     break;
+            }
+        },
+
+        onLeavingState: function(stateName) {
+            if (stateName === 'selectionKnight') {
+                Object.values(this.playerStocks).forEach(({ hand }) => {
+                    hand.items.forEach(item => {
+                        const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                        dojo.removeClass(itemDiv, 'stockitem_unselectable_singlecard');
+                    });
+                });
             }
         },
 
@@ -904,9 +937,7 @@ function (dojo, declare) {
             this.notifqueue.setSynchronous('assassinKill', 500);
 
             dojo.subscribe('targetPlayer', this, notif => {
-                console.log('Target-Player notif:', notif.args);
                 this.gamedatas.targetPlayer = notif.args[0];
-                console.log('Target-Player after notif:', this.gamedatas.targetPlayer);
             });
             this.notifqueue.setSynchronous('assassinKill', 500);
         },  

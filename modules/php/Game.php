@@ -178,12 +178,20 @@ class Game extends \Table
 
         // check input values (and find card name)
         $card_name = 'unknown';
+        $squireInHand = false;
         $validCard = false;
         foreach ($cards as $card) {
             if ($card['card_id'] == $card_id) {
                 $card_name = $card['card_type'];
                 $validCard = true;
             }
+            if ($card['card_type'] == 'Squire') {
+                $squireInHand = true;
+            }
+        }
+
+        if ($squireInHand === true && $card_name != 'Squire') {
+            throw new \BgaUserException('You must choose a squire');
         }
 
         if ($validCard == false) {
