@@ -869,6 +869,29 @@ class Game extends \Table
         
         $this->activeNextPlayer();
 
+        // Check if new player still has cards
+        $sql2 = "SELECT * FROM cards WHERE card_location = 'hand'";
+        $handCards = $this->getCollectionFromDB($sql2);
+        $emptyHand = true;
+        $playersSkipped = 0;
+        $playersAmound = $this->getPlayersNumber();
+        while ($emptyHand === true) {
+            $new_player_id = (int)$this->getActivePlayerId();
+            foreach ($handCards as $card) {
+                if ($card['card_owner'] == $new_player_id) {
+                    $emptyHand = false;
+                    break 2;
+                }
+            }
+            $playersSkipped = $playersSkipped + 1;
+            if ($playersAmound === $playersSkipped) {
+                // END GAME!!!! WHOOOOOHOOOO!!!!!
+                $this->gamestate->nextState("endGame");
+                return;
+            }
+            $this->activeNextPlayer();
+        }
+
         // Go to another gamestate
         // Here, we would detect if the game is over, and in this case use "endGame" transition instead 
         $this->gamestate->nextState("nextPlayer");
