@@ -83,7 +83,7 @@ $machinestates = [
             // these actions are called from the front with bgaPerformAction, and matched to the function on the game.php file
             "actPlayCard"
         ],
-        "transitions" => ["playCard" => 11, "playedKnight" => 12, "playedTrader" => 13]
+        "transitions" => ["playCard" => 11, "playedKnight" => 12, "playedTrader" => 13, "playedScholar" => 15]
     ],
 
     11 => [
@@ -126,6 +126,17 @@ $machinestates = [
             "actSelectionTraderOpponent"
         ],
         "transitions" => ["backToPreviousPlayer" => 21]
+    ],
+
+    15 => [
+        "name" => "selectionScholar",
+        "description" => clienttranslate('Scholar: ${actplayer} must choose a card from the selected court'),
+        "descriptionmyturn" => clienttranslate('Scholar: ${you} must choose a card from the selected court'),
+        "type" => "activeplayer",
+        "possibleactions" => [
+            "actSelectionScholar"
+        ],
+        "transitions" => ["playCard" => 11]
     ],
 
     20 => [

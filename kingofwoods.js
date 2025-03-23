@@ -691,6 +691,11 @@ function (dojo, declare) {
                 return;
             }
 
+            if (this.gamedatas.gamestate.name == 'selectionScholar') {
+                this.scholarPlayCard(cardId);
+                return;
+            }
+
             this.selectedCardId = cardId;
             const cardStock = this.findCardStock(cardId);
             cardStock.selectItem(cardId);
@@ -745,6 +750,12 @@ function (dojo, declare) {
 
         traderPlayCardOpponent: function(cardId) {
             this.bgaPerformAction("actSelectionTraderOpponent", {
+                card_id: cardId,
+            });
+        },
+
+        scholarPlayCard: function(cardId) {
+            this.bgaPerformAction("actSelectionScholar", {
                 card_id: cardId,
             });
         },
@@ -965,6 +976,53 @@ function (dojo, declare) {
                         }
                     });
                     break;
+                case 'selectionScholar':
+                    // Enable selection only in current player's hand
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
+                        const isActive = this.isCurrentPlayerActive();
+                        hand.setSelectionMode(0);
+                        court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
+    
+                        if (isTargetPlayer && isActive) {
+                            //Check Influence of Cards in Hand
+                            const cardInformation = this.cardInformation();
+                            coveredCards = [];
+                            Object.values(this.gamedatas.assassins).forEach(assassin => {
+                                coveredCards.push(assassin.coveredCardId);
+                            });
+                            validCardsUnderFive = [];
+                            validCardsAll = [];
+
+                            court.items.forEach(item => {
+                                const itemType = this.getCardType(item.id);
+                                if (cardInformation[itemType].influence < 5 && itemType != 'Assassin' && itemType != 'Scholar' && !coveredCards.includes(item.id.toString())) {
+                                    validCardsUnderFive.push(item.id.toString());
+                                }
+                                if (itemType != 'Assassin' && itemType != 'Scholar' && !coveredCards.includes(item.id.toString())) {
+                                    validCardsAll.push(item.id.toString());
+                                }
+                            });
+
+                            if (validCardsUnderFive > 0) {
+                                // Add CSS classes to non-Squires
+                                court.items.forEach(item => {
+                                    const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
+                                    if (!validCardsUnderFive.includes(item.id.toString())) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                });
+                            } else {
+                                court.items.forEach(item => {
+                                    const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
+                                    if (!validCardsAll.includes(item.id.toString())) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    break;                    
             }
         },
 
@@ -973,6 +1031,14 @@ function (dojo, declare) {
                 Object.values(this.playerStocks).forEach(({ hand }) => {
                     hand.items.forEach(item => {
                         const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                        dojo.removeClass(itemDiv, 'stockitem_unselectable_singlecard');
+                    });
+                });
+            }
+            if (stateName === 'selectionScholar') {
+                Object.values(this.playerStocks).forEach(({ court }) => {
+                    court.items.forEach(item => {
+                        const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
                         dojo.removeClass(itemDiv, 'stockitem_unselectable_singlecard');
                     });
                 });
