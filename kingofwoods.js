@@ -1222,6 +1222,9 @@ function (dojo, declare) {
                 this.gamedatas.targetInfluence = notif.args[0];
             });
             this.notifqueue.setSynchronous('targetInfluence', 100);
+
+            dojo.subscribe('score', this, "notif_score");
+            
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods
@@ -1240,5 +1243,9 @@ function (dojo, declare) {
         },    
         
         */
+
+        notif_score: function(notif) {
+            this.scoreCtrl[notif.args.player_id].setValue(notif.args.player_score);
+        },
    });             
 });

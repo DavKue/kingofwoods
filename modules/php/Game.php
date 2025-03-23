@@ -725,6 +725,41 @@ class Game extends \Table
         $this->gamestate->nextState("pass");
     }
 
+    public function updateScores (): void
+    {
+        $sql = "SELECT * FROM cards";
+        $cards = $this->getCollectionFromDB($sql);
+
+        $coveredCards = [];
+        foreach ($cards as $card) {
+            if ($card['ontop_of'] != 0) {
+                $coveredCards[] = $card['ontop_of'];
+            }
+        }
+
+        $players = $this->loadPlayersBasicInfos();
+        foreach ($players as $thisPlayer_id => $info) {
+            $playerInfluence = 0;
+            $jesterAmound = 0;
+            foreach ($cards as $card) {
+                if ($card['card_owner'] == $thisPlayer_id && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards)) {
+                    $playerInfluence = $playerInfluence + $this->cards[$card['card_type']]['influence'];
+                    if ($card['card_type'] == 'Jester' ) {
+                        $jesterAmound = $jesterAmound + 1;
+                    }
+                }
+            }
+            if ($jesterAmound === 3) {
+                $playerInfluence = 0;
+            }
+            $this->DbQuery( "UPDATE player SET player_score=$playerInfluence WHERE player_id='$thisPlayer_id'" );
+            $this->notify->all("score", '', [
+                "player_id" => $thisPlayer_id,
+                "player_score" => $playerInfluence,
+            ]);
+        }
+    }
+
     /**
      * Game state arguments, example content.
      *
@@ -823,6 +858,9 @@ class Game extends \Table
     } 
 
     public function stNextPlayer(): void {
+        //Update Scores
+        $this->updateScores();
+
         // Retrieve the active player ID.
         $player_id = (int)$this->getActivePlayerId();
 
