@@ -969,7 +969,7 @@ function (dojo, declare) {
         },
 
         onLeavingState: function(stateName) {
-            if (stateName === 'selectionKnight' || stateName === 'playerTurn') {
+            if (stateName === 'selectionKnight' || stateName === 'playerTurn' || stateName === 'selectionTraderOpponent') {
                 Object.values(this.playerStocks).forEach(({ hand }) => {
                     hand.items.forEach(item => {
                         const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
