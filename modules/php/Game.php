@@ -166,8 +166,40 @@ class Game extends \Table
             "i18n" => ['card_name'],
         ]);
 
-        // at the end of the action, move to the next state
+        if ($card_name == 'Treasurer' && $player_id != $target_player_id) {
+            $sql = "SELECT * FROM cards WHERE card_owner = $target_player_id";
+            $targetCards = $this->getCollectionFromDB($sql);
 
+            $cardIds = array_column($targetCards, 'card_id');
+            if (empty($cardIds)) {
+                throw new \BgaUserException('No cards available for selection.');
+            } else {
+                $randomIndex = random_int(0, count($cardIds) - 1);
+                $randomCardId = $cardIds[$randomIndex];
+                $this->DbQuery("UPDATE cards SET card_owner = $player_id, card_location = 'hand', ontop_of = 0 WHERE card_id = '$randomCardId'");
+                //Moved card for all
+                $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$randomCardId'");
+                $players = $this->loadPlayersBasicInfos();
+                foreach ($players as $thisPlayer_id => $info) {
+                    $hiddenCards = $cardNofif;
+                    foreach ($cardNofif as $index => $card) {
+                        if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
+                            $hiddenCards[$index]['card_type'] = 'hidden';
+                        }
+                    }
+                    $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Treasurer-Effect: ${player_name} took a random card from the hand of ${target_player}'), [
+                        "cards" => array_values($hiddenCards),
+                        "player_id" => $player_id,
+                        "player_name" => $this->getActivePlayerName(),
+                        "target_player" => $this->getPlayerNameById($target_player_id),
+                        "card_id" => $randomCardId,
+                        "i18n" => ['card_name'],
+                    ]);
+                }
+            }
+        }
+
+        // at the end of the action, move to the next state
         if ($card_name == 'Knight' && $player_id != $target_player_id) {
             $res = json_encode($target_player_id);
             $this->DbQuery(
