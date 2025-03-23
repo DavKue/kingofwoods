@@ -286,7 +286,7 @@ function (dojo, declare) {
                     'type' : 6,
                     'name' : _('Priest'),
                     'influence' : 3,
-                    'text' : _("You may put an additional card to the same court in order to take 1 card with lowerinfluence from there to your hand (not the Assassin or the Jester)."),
+                    'text' : _("You may put an additional card to the same court in order to take 1 card with lower influence from there to your hand (not the Assassin or the Jester)."),
                 },
                 'Jester': {
                     'type' : 7,
@@ -696,6 +696,16 @@ function (dojo, declare) {
                 return;
             }
 
+            if (this.gamedatas.gamestate.name == 'selectionPriestFirst') {
+                this.priestPlayCardFirst(cardId);
+                return;
+            }
+
+            if (this.gamedatas.gamestate.name == 'selectionPriestSecond') {
+                this.priestPlayCardSecond(cardId);
+                return;
+            }
+
             this.selectedCardId = cardId;
             const cardStock = this.findCardStock(cardId);
             cardStock.selectItem(cardId);
@@ -756,6 +766,18 @@ function (dojo, declare) {
 
         scholarPlayCard: function(cardId) {
             this.bgaPerformAction("actSelectionScholar", {
+                card_id: cardId,
+            });
+        },
+
+        priestPlayCardFirst: function(cardId) {
+            this.bgaPerformAction("actSelectionPriestFirst", {
+                card_id: cardId,
+            });
+        },
+
+        priestPlayCardSecond: function(cardId) {
+            this.bgaPerformAction("actSelectionPriestSecond", {
                 card_id: cardId,
             });
         },
@@ -854,8 +876,10 @@ function (dojo, declare) {
 
         // Update stock selection mode dynamically:
         onEnteringState: function(stateName, args) {
+            console.log('State Name:', stateName);
             switch(stateName) {
-                case 'playerTurn':
+                case 'playerTurn' && 'selectionPriestFirst':
+                    console.log('Hello World:');
                     const playedSquireIds = this.gamedatas.cards
                     .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
                     .map(squire => squire.card_id.toString());
@@ -977,7 +1001,7 @@ function (dojo, declare) {
                     });
                     break;
                 case 'selectionScholar':
-                    // Enable selection only in current player's hand
+                    // Enable selection only in target player's court
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
                         const isActive = this.isCurrentPlayerActive();
@@ -1022,12 +1046,51 @@ function (dojo, declare) {
                             }
                         }
                     });
-                    break;                    
+                    break;   
+                case 'selectionPriestSecond':
+                    // Enable selection only in target player's court
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
+                        const isActive = this.isCurrentPlayerActive();
+                        hand.setSelectionMode(0);
+                        court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
+        
+                        if (isTargetPlayer && isActive) {
+                            //Check Influence of Cards in Hand
+                            const cardInformation = this.cardInformation();
+                            const targetInfluence = this.gamedatas.targetInfluence;
+                            coveredCards = [];
+                            Object.values(this.gamedatas.assassins).forEach(assassin => {
+                                coveredCards.push(assassin.coveredCardId);
+                            });
+                            validCardsAll = [];
+    
+                            $priestExcluded = false;
+                            court.items.forEach(item => {
+                                const itemType = this.getCardType(item.id);
+                                if (itemType == 'Priest' && $priestExcluded === false) {
+                                    $priestExcluded = true;
+                                    return;
+                                }
+                                if (!coveredCards.includes(item.id.toString()) && targetInfluence > cardInformation[itemType].influence && itemType != 'Assassin' && itemType != 'Jester') {
+                                    validCardsAll.push(item.id.toString());
+                                }
+                            });
+                            console.log('Valid Cards:', validCardsAll);
+                            court.items.forEach(item => {
+                                const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
+                                if (!validCardsAll.includes(item.id.toString())) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                            });
+                        }
+                    });
+                    break;             
             }
         },
 
         onLeavingState: function(stateName) {
-            if (stateName === 'selectionKnight' || stateName === 'playerTurn' || stateName === 'selectionTraderOpponent') {
+            if (stateName === 'selectionKnight' || stateName === 'playerTurn' || stateName === 'selectionTraderOpponent' || stateName === 'selectionPriestFirst') {
                 Object.values(this.playerStocks).forEach(({ hand }) => {
                     hand.items.forEach(item => {
                         const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
@@ -1035,7 +1098,7 @@ function (dojo, declare) {
                     });
                 });
             }
-            if (stateName === 'selectionScholar') {
+            if (stateName === 'selectionScholar' || stateName === 'selectionPriestSecond') {
                 Object.values(this.playerStocks).forEach(({ court }) => {
                     court.items.forEach(item => {
                         const itemDiv = $(`${court.container_div.id}_item_${item.id}`);

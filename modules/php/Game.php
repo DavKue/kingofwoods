@@ -203,6 +203,16 @@ class Game extends \Table
             $this->gamestate->nextState("playedScholar");
             return;
         }
+        if ($card_name == 'Priest') {
+            $res = json_encode($target_player_id);
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+            );
+            $this->notify->all('targetPlayer', '', [$target_player_id] );
+
+            $this->gamestate->nextState("playedPriest");
+            return;
+        }
         $this->gamestate->nextState("playCard");
     }
 
@@ -268,8 +278,6 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
-
-
 
         //Hide Target Players hand
         $cardNofifActivePlayer = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_owner = '$targetPlayer'");
@@ -447,7 +455,6 @@ class Game extends \Table
             if ($card['ontop_of'] != 0) {
                 $coveredCards[] = $card['ontop_of'];
             }
-
         }
         foreach ($cards as $card) {
             if ($card['card_id'] == $card_id && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards)) {
@@ -496,6 +503,147 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
+
+        $this->gamestate->nextState("playCard");
+    }
+
+    public function actSelectionPriestFirst(int $card_id): void
+    {
+        // Retrieve the active player ID.
+        $player_id = (int)$this->getActivePlayerId();
+
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetPlayer'"
+        );
+        $targetPlayer = json_decode($data['targetPlayer']['value'], true);
+            
+        $sql = "SELECT * FROM cards WHERE card_owner = $player_id";
+        $cards = $this->getCollectionFromDB($sql);
+
+        // check input values (and find card name)
+        $card_name = 'unknown';
+        $validCard = false;
+        foreach ($cards as $card) {
+            if ($card['card_id'] == $card_id && $card['card_location'] == 'hand') {
+                $card_name = $card['card_type'];
+                $validCard = true;
+            }
+        }
+
+        if ($validCard == false) {
+            throw new \BgaUserException('Invalid card choice');
+        }
+
+        $this->DbQuery("UPDATE cards SET card_owner = $targetPlayer, card_location = 'court', ontop_of = 0 WHERE card_id = '$card_id'");
+
+        //Moved card for all
+        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$card_id'");
+        $players = $this->loadPlayersBasicInfos();
+        foreach ($players as $thisPlayer_id => $info) {
+            $hiddenCards = $cardNofif;
+            foreach ($cardNofif as $index => $card) {
+                if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
+            }
+            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Priest-Effect: ${player_name} played a ${card_name} to the court of ${target_player}'), [
+                "cards" => array_values($hiddenCards),
+                "player_id" => $player_id,
+                "player_name" => $this->getActivePlayerName(),
+                "target_player" => $this->getPlayerNameById($targetPlayer),
+                "card_id" => $card_id,
+                "card_name" => $card_name,
+                "i18n" => ['card_name'],
+            ]);
+        }
+
+        $targetInfluence = $this->cards[$card_name]['influence'];
+        $res3 = json_encode($targetInfluence);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res3' WHERE name = 'targetInfluence'"
+        );
+        $this->notify->all('targetInfluence', '', [$targetInfluence] );
+
+        $this->gamestate->nextState("selectionPriestSecond");
+    }
+
+    public function actSelectionPriestSecond(int $card_id): void
+    {
+        // Retrieve the active player ID.
+        $player_id = (int)$this->getActivePlayerId();
+
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetInfluence'"
+        );
+        $targetInfluence = json_decode($data['targetInfluence']['value'], true);
+
+        $data2 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetPlayer'"
+        );
+        $targetPlayer = json_decode($data2['targetPlayer']['value'], true);
+            
+        $sql = "SELECT * FROM cards WHERE card_owner = $targetPlayer";
+        $cards = $this->getCollectionFromDB($sql);
+
+        $coveredCards = [];
+        foreach ($cards as $card) {
+            if ($card['ontop_of'] != 0) {
+                $coveredCards[] = $card['ontop_of'];
+            }
+        }
+
+        // check input values (and find card name)
+        $card_name = 'unknown';
+        $validCard = false;
+        foreach ($cards as $card) {
+            if ($card['card_id'] == $card_id && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards)) {
+                $card_name = $card['card_type'];
+                $validCard = true;
+            }
+        }
+        if ($validCard == false) {
+            throw new \BgaUserException('Invalid card choice');
+        }
+
+        $chosenInfluence = $this->cards[$card_name]['influence'];
+        if ($chosenInfluence >= $targetInfluence) {
+            throw new \BgaUserException('Choose a card with a lower influence');
+        }
+
+        $this->DbQuery("UPDATE cards SET card_owner = $player_id, card_location = 'hand', ontop_of = 0 WHERE card_id = '$card_id'");
+
+        //Moved card for all
+        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$card_id'");
+        $players = $this->loadPlayersBasicInfos();
+        foreach ($players as $thisPlayer_id => $info) {
+            $hiddenCards = $cardNofif;
+            foreach ($cardNofif as $index => $card) {
+                if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
+            }
+            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Priest-Effect: ${player_name} took a ${card_name} from the court of ${target_player}'), [
+                "cards" => array_values($hiddenCards),
+                "player_id" => $player_id,
+                "player_name" => $this->getActivePlayerName(),
+                "target_player" => $this->getPlayerNameById($targetPlayer),
+                "card_id" => $card_id,
+                "card_name" => $card_name,
+                "i18n" => ['card_name'],
+            ]);
+        }
+
+        $res = json_encode('noPlayerID');
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+        );
+        $this->notify->all('targetPlayer', '', ['noPlayerID'] );
+
+        $res2 = json_encode(0);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res2' WHERE name = 'targetInfluence'"
+        );
+        $this->notify->all('targetInfluence', '', [0] );
 
         $this->gamestate->nextState("playCard");
     }

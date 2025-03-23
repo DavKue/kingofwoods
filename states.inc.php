@@ -83,7 +83,7 @@ $machinestates = [
             // these actions are called from the front with bgaPerformAction, and matched to the function on the game.php file
             "actPlayCard"
         ],
-        "transitions" => ["playCard" => 11, "playedKnight" => 12, "playedTrader" => 13, "playedScholar" => 15]
+        "transitions" => ["playCard" => 11, "playedKnight" => 12, "playedTrader" => 13, "playedScholar" => 15, "playedPriest" => 16]
     ],
 
     11 => [
@@ -98,7 +98,7 @@ $machinestates = [
     12 => [
         "name" => "selectionKnight",
         "description" => clienttranslate('Knight: ${actplayer} must choose a card from the selected hand'),
-        "descriptionmyturn" => clienttranslate('$Knight: {you} must choose a card from the selected hand'),
+        "descriptionmyturn" => clienttranslate('Knight: ${you} must choose a card from the selected hand'),
         "type" => "activeplayer",
         "possibleactions" => [
             "actSelectionKnight"
@@ -119,8 +119,8 @@ $machinestates = [
 
     14 => [
         "name" => "selectionTraderOpponent",
-        "description" => clienttranslate('Trader: ${actplayer} must give back a card with higher initiative (or the highest)'),
-        "descriptionmyturn" => clienttranslate('Trader: ${you} must give back a card with higher initiative (or the highest)'),
+        "description" => clienttranslate('Trader: ${actplayer} must give back a card with higher influence (or the highest)'),
+        "descriptionmyturn" => clienttranslate('Trader: ${you} must give back a card with higher influence (or the highest)'),
         "type" => "activeplayer",
         "possibleactions" => [
             "actSelectionTraderOpponent"
@@ -135,6 +135,28 @@ $machinestates = [
         "type" => "activeplayer",
         "possibleactions" => [
             "actSelectionScholar"
+        ],
+        "transitions" => ["playCard" => 11]
+    ],
+
+    16 => [
+        "name" => "selectionPriestFirst",
+        "description" => clienttranslate('Priest: ${actplayer} may play another card to the same court'),
+        "descriptionmyturn" => clienttranslate('Priest: ${you} may play another card to the same court'),
+        "type" => "activeplayer",
+        "possibleactions" => [
+            "actSelectionPriestFirst"
+        ],
+        "transitions" => ["selectionPriestSecond" => 17]
+    ],
+
+    17 => [
+        "name" => "selectionPriestSecond",
+        "description" => clienttranslate('Priest: ${actplayer} must take a card with lower influence from target court'),
+        "descriptionmyturn" => clienttranslate('Priest: ${you} must take a card with lower influence from target court'),
+        "type" => "activeplayer",
+        "possibleactions" => [
+            "actSelectionPriestSecond"
         ],
         "transitions" => ["playCard" => 11]
     ],
