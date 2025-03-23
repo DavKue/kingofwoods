@@ -145,9 +145,10 @@ $machinestates = [
         "descriptionmyturn" => clienttranslate('Priest: ${you} may play another card to the same court'),
         "type" => "activeplayer",
         "possibleactions" => [
-            "actSelectionPriestFirst"
+            "actSelectionPriestFirst",
+            "actPassPriest"
         ],
-        "transitions" => ["selectionPriestSecond" => 17]
+        "transitions" => ["selectionPriestSecond" => 17, "pass" => 11]
     ],
 
     17 => [

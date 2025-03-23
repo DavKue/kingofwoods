@@ -782,6 +782,11 @@ function (dojo, declare) {
             });
         },
 
+        priestPass: function () {
+            this.bgaPerformAction("actPassPriest");
+            this.statusBar.removeActionButtons();
+        },
+
         assassinGetValidTargets: function(targetCourt) {
             const playerCards = targetCourt.getAllItems();
             const validCards = Object.values(playerCards);
@@ -876,11 +881,9 @@ function (dojo, declare) {
 
         // Update stock selection mode dynamically:
         onEnteringState: function(stateName, args) {
-            console.log('State Name:', stateName);
             switch(stateName) {
-                case 'playerTurn' && 'selectionPriestFirst':
-                    console.log('Hello World:');
-                    const playedSquireIds = this.gamedatas.cards
+                case 'playerTurn':
+                    playedSquireIds = this.gamedatas.cards
                     .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
                     .map(squire => squire.card_id.toString());
 
@@ -1076,7 +1079,6 @@ function (dojo, declare) {
                                     validCardsAll.push(item.id.toString());
                                 }
                             });
-                            console.log('Valid Cards:', validCardsAll);
                             court.items.forEach(item => {
                                 const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
                                 if (!validCardsAll.includes(item.id.toString())) {
@@ -1085,7 +1087,51 @@ function (dojo, declare) {
                             });
                         }
                     });
-                    break;             
+                    break;     
+                case 'selectionPriestFirst':
+                    playedSquireIds = this.gamedatas.cards
+                    .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
+                    .map(squire => squire.card_id.toString());
+    
+                    // Enable selection only in current player's hand
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                        const isActive = this.isCurrentPlayerActive();
+                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                        court.setSelectionMode(0); // Never select from courts
+    
+                        //Check mandatory Squire Play
+                        const squireIds = hand.items
+                        .filter(item => this.getCardType(item.id) === 'Squire')
+                        .map(squire => squire.id.toString());
+                        if (playedSquireIds.length > 0 && squireIds.length > 0) {
+                            // Add CSS classes to non-Squires
+                            hand.items.forEach(item => {
+                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                if (!squireIds.includes(item.id.toString())) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                            });
+                        }
+    
+                        if (court.items.length < 3) {
+                            hand.items.forEach(item => {
+                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                if (this.getCardType(item.id) === 'Princess') {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                            });
+                        }
+    
+                    });
+
+                    this.statusBar.addActionButton(
+                        _("Pass"),
+                        () => this.priestPass(),
+                        { color: 'secondary' }
+                    );
+    
+                    break;        
             }
         },
 

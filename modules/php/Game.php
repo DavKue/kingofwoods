@@ -648,6 +648,17 @@ class Game extends \Table
         $this->gamestate->nextState("playCard");
     }
 
+    public function actPassPriest (): void
+    {
+        $res = json_encode('noPlayerID');
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+        );
+        $this->notify->all('targetPlayer', '', ['noPlayerID'] );
+
+        $this->gamestate->nextState("pass");
+    }
+
     /**
      * Game state arguments, example content.
      *
