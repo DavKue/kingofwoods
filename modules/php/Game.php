@@ -199,6 +199,40 @@ class Game extends \Table
             }
         }
 
+        if ($card_name == 'General' && $player_id != $target_player_id) {
+            $sql = "SELECT * FROM cards";
+            $allCards = $this->getCollectionFromDB($sql);
+
+            foreach ($allCards as $key => $card) {
+                if ($card['card_location'] == 'hand' && $card['card_owner'] == $player_id) {
+                    $this->DbQuery("UPDATE cards SET card_owner = $target_player_id WHERE card_id = '$key'");
+                }
+                if ($card['card_location'] == 'hand' && $card['card_owner'] == $target_player_id) {
+                    $this->DbQuery("UPDATE cards SET card_owner = $player_id WHERE card_id = '$key'");
+                }
+            }
+
+            //Moved card for all
+            $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards");
+            $players = $this->loadPlayersBasicInfos();
+            foreach ($players as $thisPlayer_id => $info) {
+                $hiddenCards = $cardNofif;
+                foreach ($cardNofif as $index => $card) {
+                    if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
+                        $hiddenCards[$index]['card_type'] = 'hidden';
+                    }
+                }
+                $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('General-Effect: ${player_name} exchanged hand cards with ${target_player}'), [
+                    "cards" => array_values($hiddenCards),
+                    "player_id" => $player_id,
+                    "player_name" => $this->getActivePlayerName(),
+                    "target_player" => $this->getPlayerNameById($target_player_id),
+                    "i18n" => ['card_name'],
+                ]);
+            }
+
+        }
+
         // at the end of the action, move to the next state
         if ($card_name == 'Knight' && $player_id != $target_player_id) {
             $res = json_encode($target_player_id);
