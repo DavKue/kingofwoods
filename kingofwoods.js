@@ -425,9 +425,6 @@ function (dojo, declare) {
 
                 //Regular Cards
                 if (fromStock && fromStock !== toStock) {
-                    console.log('From Stock:', fromStock);
-                    console.log('To Stock:', toStock);
-
                     toStock.addToStockWithId(
                         typeId,
                         card.card_id.toString()
@@ -524,7 +521,6 @@ function (dojo, declare) {
                 dojo.destroy(`assassin_${victim}`);
             }, this.slideDuration);
 
-            console.log('ASSASSINS:', this.gamedatas.assassins);
             delete this.gamedatas.assassins[victim];
         },
 
@@ -685,6 +681,16 @@ function (dojo, declare) {
                 return;
             }
 
+            if (this.gamedatas.gamestate.name == 'selectionTraderPlayer') {
+                this.traderPlayCardPlayer(cardId);
+                return;
+            }
+
+            if (this.gamedatas.gamestate.name == 'selectionTraderOpponent') {
+                this.traderPlayCardOpponent(cardId);
+                return;
+            }
+
             this.selectedCardId = cardId;
             const cardStock = this.findCardStock(cardId);
             cardStock.selectItem(cardId);
@@ -731,6 +737,18 @@ function (dojo, declare) {
             });
         },
 
+        traderPlayCardPlayer: function(cardId) {
+            this.bgaPerformAction("actSelectionTraderPlayer", {
+                card_id: cardId,
+            });
+        },
+
+        traderPlayCardOpponent: function(cardId) {
+            this.bgaPerformAction("actSelectionTraderOpponent", {
+                card_id: cardId,
+            });
+        },
+
         assassinGetValidTargets: function(targetCourt) {
             const playerCards = targetCourt.getAllItems();
             const validCards = Object.values(playerCards);
@@ -745,7 +763,6 @@ function (dojo, declare) {
                 this.getCardType(card.id) === 'Guard' && 
                 !coveredCards.has(card.id.toString()) // Convert to string for consistent comparison
             );
-            console.log('Guards after:', guards);
 
             return guards.length > 0 ? guards : validCards;
         },
@@ -874,8 +891,6 @@ function (dojo, declare) {
                             const squireIds = hand.items
                                 .filter(item => this.getCardType(item.id) === 'Squire')
                                 .map(squire => squire.id.toString());
-                
-                            console.log('squire IDs:', squireIds);
 
                             // Enable selection mode but filter in click handler
                             hand.setSelectionMode(1);
@@ -894,6 +909,60 @@ function (dojo, declare) {
                             hand.setSelectionMode(0);
                         }
                         court.setSelectionMode(0);
+                    });
+                    break;
+                case 'selectionTraderPlayer':
+                    // Enable selection only in current player's hand
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                        const isActive = this.isCurrentPlayerActive();
+                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                        court.setSelectionMode(0); // Never select from courts
+                    });
+                    break;
+                case 'selectionTraderOpponent':
+                    // Enable selection only in current player's hand
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                        const isActive = this.isCurrentPlayerActive();
+                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                        court.setSelectionMode(0); // Never select from courts
+
+                        if (isCurrentPlayer && isActive) {
+                            //Check Influence of Cards in Hand
+                            const targetInfluence = this.gamedatas.targetInfluence;
+                            const cardInformation = this.cardInformation();
+
+                            highestInfluence = 0;
+                            higherInfluenceCards = [];
+                            hand.items.forEach(item => {
+                                const itemType = this.getCardType(item.id);
+                                if (cardInformation[itemType].influence > highestInfluence) {
+                                    highestInfluence = cardInformation[itemType].influence;
+                                }
+                                if (cardInformation[itemType].influence > targetInfluence) {
+                                    higherInfluenceCards.push(item.id.toString());
+                                }
+                            });
+
+                            if (higherInfluenceCards.length > 0) {
+                                // Add CSS classes to non-Squires
+                                hand.items.forEach(item => {
+                                    const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                    if (!higherInfluenceCards.includes(item.id.toString())) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                });
+                            } else {
+                                hand.items.forEach(item => {
+                                    const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                    const itemType = this.getCardType(item.id);
+                                    if (cardInformation[itemType].influence != highestInfluence) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                });
+                            }
+                        }
                     });
                     break;
             }
@@ -967,7 +1036,17 @@ function (dojo, declare) {
             dojo.subscribe('targetPlayer', this, notif => {
                 this.gamedatas.targetPlayer = notif.args[0];
             });
-            this.notifqueue.setSynchronous('assassinKill', 500);
+            this.notifqueue.setSynchronous('targetPlayer', 100);
+
+            dojo.subscribe('specialActivePlayer', this, notif => {
+                this.gamedatas.specialActivePlayer = notif.args[0];
+            });
+            this.notifqueue.setSynchronous('specialActivePlayer', 100);
+
+            dojo.subscribe('targetInfluence', this, notif => {
+                this.gamedatas.targetInfluence = notif.args[0];
+            });
+            this.notifqueue.setSynchronous('targetInfluence', 100);
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods

@@ -83,7 +83,7 @@ $machinestates = [
             // these actions are called from the front with bgaPerformAction, and matched to the function on the game.php file
             "actPlayCard"
         ],
-        "transitions" => ["playCard" => 11, "playedKnight" => 12]
+        "transitions" => ["playCard" => 11, "playedKnight" => 12, "playedTrader" => 13]
     ],
 
     11 => [
@@ -97,13 +97,53 @@ $machinestates = [
 
     12 => [
         "name" => "selectionKnight",
-        "description" => clienttranslate('${actplayer} must choose a card from the selected hand'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a card from the selected hand'),
+        "description" => clienttranslate('Knight: ${actplayer} must choose a card from the selected hand'),
+        "descriptionmyturn" => clienttranslate('$Knight: {you} must choose a card from the selected hand'),
         "type" => "activeplayer",
         "possibleactions" => [
             "actSelectionKnight"
         ],
         "transitions" => ["playCard" => 11]
+    ],
+
+    13 => [
+        "name" => "selectionTraderPlayer",
+        "description" => clienttranslate('Trader: ${actplayer} must choose a card to give to target player'),
+        "descriptionmyturn" => clienttranslate('Trader: ${you} must choose a card to give to target player'),
+        "type" => "activeplayer",
+        "possibleactions" => [
+            "actSelectionTraderPlayer"
+        ],
+        "transitions" => ["activatePlayer" => 20]
+    ],
+
+    14 => [
+        "name" => "selectionTraderOpponent",
+        "description" => clienttranslate('Trader: ${actplayer} must give back a card with higher initiative (or the highest)'),
+        "descriptionmyturn" => clienttranslate('Trader: ${you} must give back a card with higher initiative (or the highest)'),
+        "type" => "activeplayer",
+        "possibleactions" => [
+            "actSelectionTraderOpponent"
+        ],
+        "transitions" => ["backToPreviousPlayer" => 21]
+    ],
+
+    20 => [
+        "name" => "activatePlayer",
+        "description" => '',
+        "type" => "game",
+        "action" => "stActivatePlayer",
+        "updateGameProgression" => true,
+        "transitions" => ["selectionTraderOpponent" => 14]
+    ],
+
+    21 => [
+        "name" => "backToPreviousPlayer",
+        "description" => '',
+        "type" => "game",
+        "action" => "stBackToPreviousPlayer",
+        "updateGameProgression" => true,
+        "transitions" => ["nextPlayer" => 11]
     ],
 
     // Final state.
