@@ -980,15 +980,16 @@ function (dojo, declare) {
                             //Check Influence of Cards in Hand
                             const targetInfluence = this.gamedatas.targetInfluence;
                             const cardInformation = this.cardInformation();
+                            const blockedCard = this.gamedatas.blockedCard;
 
                             highestInfluence = 0;
                             higherInfluenceCards = [];
                             hand.items.forEach(item => {
                                 const itemType = this.getCardType(item.id);
-                                if (cardInformation[itemType].influence > highestInfluence) {
+                                if (cardInformation[itemType].influence > highestInfluence && item.id != blockedCard) {
                                     highestInfluence = cardInformation[itemType].influence;
                                 }
-                                if (cardInformation[itemType].influence > targetInfluence) {
+                                if (cardInformation[itemType].influence > targetInfluence && item.id != blockedCard) {
                                     higherInfluenceCards.push(item.id.toString());
                                 }
                             });
@@ -1005,7 +1006,7 @@ function (dojo, declare) {
                                 hand.items.forEach(item => {
                                     const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                     const itemType = this.getCardType(item.id);
-                                    if (cardInformation[itemType].influence != highestInfluence) {
+                                    if (cardInformation[itemType].influence != highestInfluence || item.id == blockedCard) {
                                         dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
                                     }
                                 });
@@ -1072,20 +1073,16 @@ function (dojo, declare) {
                             //Check Influence of Cards in Hand
                             const cardInformation = this.cardInformation();
                             const targetInfluence = this.gamedatas.targetInfluence;
+                            const blockedCard = this.gamedatas.blockedCard;
                             coveredCards = [];
                             Object.values(this.gamedatas.assassins).forEach(assassin => {
                                 coveredCards.push(assassin.coveredCardId);
                             });
                             validCardsAll = [];
     
-                            $priestExcluded = false;
                             court.items.forEach(item => {
                                 const itemType = this.getCardType(item.id);
-                                if (itemType == 'Priest' && $priestExcluded === false) {
-                                    $priestExcluded = true;
-                                    return;
-                                }
-                                if (!coveredCards.includes(item.id.toString()) && targetInfluence > cardInformation[itemType].influence && itemType != 'Assassin' && itemType != 'Jester') {
+                                if (!coveredCards.includes(item.id.toString()) && targetInfluence > cardInformation[itemType].influence && itemType != 'Assassin' && itemType != 'Jester' && item.id != blockedCard) {
                                     validCardsAll.push(item.id.toString());
                                 }
                             });
@@ -1232,6 +1229,11 @@ function (dojo, declare) {
                 this.gamedatas.targetInfluence = notif.args[0];
             });
             this.notifqueue.setSynchronous('targetInfluence', 100);
+
+            dojo.subscribe('blockedCard', this, notif => {
+                this.gamedatas.blockedCard = notif.args[0];
+            });
+            this.notifqueue.setSynchronous('blockedCard', 100);
 
             dojo.subscribe('score', this, "notif_score");
             

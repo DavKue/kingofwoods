@@ -276,6 +276,12 @@ class Game extends \Table
             );
             $this->notify->all('targetPlayer', '', [$target_player_id] );
 
+            $res2 = json_encode($card_id);
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res2' WHERE name = 'blockedCard'"
+            );
+            $this->notify->all('blockedCard', '', [$card_id] );
+
             $this->gamestate->nextState("playedPriest");
             return;
         }
@@ -427,6 +433,12 @@ class Game extends \Table
             "UPDATE ingame SET value='$res3' WHERE name = 'targetInfluence'"
         );
         $this->notify->all('targetInfluence', '', [$targetInfluence] );
+
+        $res4 = json_encode($card_id);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res4' WHERE name = 'blockedCard'"
+        );
+        $this->notify->all('blockedCard', '', [$card_id] );
 
         $this->gamestate->nextState("activatePlayer");
     } 
@@ -711,6 +723,12 @@ class Game extends \Table
         );
         $this->notify->all('targetInfluence', '', [0] );
 
+        $res3 = json_encode(0);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res3' WHERE name = 'blockedCard'"
+        );
+        $this->notify->all('blockedCard', '', [0] );
+
         $this->gamestate->nextState("playCard");
     }
 
@@ -721,6 +739,12 @@ class Game extends \Table
             "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
         );
         $this->notify->all('targetPlayer', '', ['noPlayerID'] );
+
+        $res2 = json_encode(0);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res2' WHERE name = 'blockedCard'"
+        );
+        $this->notify->all('blockedCard', '', [0] );
 
         $this->gamestate->nextState("pass");
     }
@@ -945,6 +969,12 @@ class Game extends \Table
         );
         $this->notify->all('targetInfluence', '', [0] );
 
+        $res4 = json_encode(0);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res4' WHERE name = 'blockedCard'"
+        );
+        $this->notify->all('blockedCard', '', [0] );
+
         $this->gamestate->changeActivePlayer( $targetPlayer );
 
         // Go to another gamestate
@@ -1023,6 +1053,12 @@ class Game extends \Table
         $targetInfluence = json_decode($data3['targetInfluence']['value'], true);
         $result['targetInfluence'] = $targetInfluence;
 
+        $data4 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'blockedCard'"
+        );
+        $blockedCard = json_decode($data4['blockedCard']['value'], true);
+        $result['blockedCard'] = $blockedCard;
+
         $gamestate = $this->gamestate->state();
 
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
@@ -1097,8 +1133,11 @@ class Game extends \Table
         // Create empty 'specialActivePlayer'-Entry
         $sql = "INSERT INTO ingame (name, value) VALUES ('specialActivePlayer', 'noPlayerID')";
         $this->DbQuery($sql);
-        // Create empty 'specialActivePlayer'-Entry
+        // Create empty 'targetInfluence'-Entry
         $sql = "INSERT INTO ingame (name, value) VALUES ('targetInfluence', 0)";
+        $this->DbQuery($sql);
+        // Create empty 'blockedCard'-Entry
+        $sql = "INSERT INTO ingame (name, value) VALUES ('blockedCard', 0)";
         $this->DbQuery($sql);
 
         // Dummy content.
