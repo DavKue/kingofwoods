@@ -17,7 +17,7 @@ $gameinfos = [
     'publisher' => 'Steinbock Brettspiele',
 
     // Url of game publisher website
-    'publisher_website' => 'http://www.mypublishingcompany.com/',
+    'publisher_website' => 'https://www.steinbock-brettspiele.de/',
 
     // Board Game Geek ID of the publisher
     'publisher_bgg_id' => 57697,
@@ -54,7 +54,7 @@ $gameinfos = [
     // Note: if you are NOT using any tie breaker, leave the empty string.
     //
     // Example: 'tie_breaker_description' => totranslate( "Number of remaining cards in hand" ),
-    'tie_breaker_description' => "",
+    'tie_breaker_description' => totranslate("The Player that owns the Princess wins in a tie"),
 
     // If in the game, all losers are equal (no score to rank them or explicit in the rules that losers are not ranked between them), set this to true
     // The game end result will display "Winner" for the 1st player and "Loser" for all other players

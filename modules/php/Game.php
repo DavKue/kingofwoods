@@ -741,16 +741,25 @@ class Game extends \Table
         foreach ($players as $thisPlayer_id => $info) {
             $playerInfluence = 0;
             $jesterAmound = 0;
+            $ownPrincess = false;
             foreach ($cards as $card) {
                 if ($card['card_owner'] == $thisPlayer_id && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards)) {
                     $playerInfluence = $playerInfluence + $this->cards[$card['card_type']]['influence'];
                     if ($card['card_type'] == 'Jester' ) {
                         $jesterAmound = $jesterAmound + 1;
                     }
+                    if ($card['card_type'] == 'Princess' ) {
+                        $ownPrincess = true;
+                    }
                 }
             }
             if ($jesterAmound === 3) {
                 $playerInfluence = 0;
+            }
+            if ($ownPrincess === true) {
+                $this->DbQuery( "UPDATE player SET player_score_aux=1 WHERE player_id='$thisPlayer_id'" );
+            } else {
+                $this->DbQuery( "UPDATE player SET player_score_aux=0 WHERE player_id='$thisPlayer_id'" );
             }
             $this->DbQuery( "UPDATE player SET player_score=$playerInfluence WHERE player_id='$thisPlayer_id'" );
             $this->notify->all("score", '', [
