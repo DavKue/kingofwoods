@@ -488,9 +488,17 @@ function (dojo, declare) {
             
             // Get all players (including self)
             const players = this.gamedatas.players;
+
+            // Get the official player order from BGA framework
+            const playerOrder = this.gamedatas.playerorder;
+        
+            // Sort players according to official panel order
+            const orderedPlayers = playerOrder.map(playerId => 
+                Object.values(players).find(p => p.id == playerId)
+            );
             
             // Add buttons for each player
-            Object.values(players).forEach(player => {
+            Object.values(orderedPlayers).forEach(player => {
                 this.statusBar.addActionButton(
                     _('Play to ${player_name}\'s court').replace('${player_name}', player.name),
                     () => this.confirmCardPlay(cardId, player.id),
