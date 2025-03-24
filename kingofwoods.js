@@ -214,7 +214,17 @@ function (dojo, declare) {
 
         initializePlayerStocks: function(players) {
             const playerTables = document.getElementById('player-tables');
-            Object.values(players).forEach(player => {
+            playerTables.innerHTML = '';
+        
+            // Get the official player order from BGA framework
+            const playerOrder = this.gamedatas.playerorder;
+        
+            // Sort players according to official panel order
+            const orderedPlayers = playerOrder.map(playerId => 
+                Object.values(players).find(p => p.id == playerId)
+            );
+
+            Object.values(orderedPlayers).forEach(player => {
                 // Create player area
                 const playerDiv = document.createElement('div');
                 playerDiv.className = 'player-area';
