@@ -412,7 +412,7 @@ function (dojo, declare) {
             const maxHeight = element.offsetHeight;
             let fontSize = parseInt(window.getComputedStyle(element).fontSize);
             
-            while (element.scrollHeight > maxHeight && fontSize > 8) {
+            while (element.scrollHeight > maxHeight && fontSize > 7) {
                 fontSize--;
                 element.style.fontSize = `${fontSize}px`;
             }

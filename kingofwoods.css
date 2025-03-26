@@ -136,7 +136,7 @@
     line-height: 1.2;
     overflow: hidden;
     pointer-events: none;
-    display: flex;
+    display: block;
     align-items: center;
     justify-content: center;
     padding: 2%;
