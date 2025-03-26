@@ -115,14 +115,16 @@
 }
 
 .card-text {
+    font-family: 'KOTWFont', serif;
+    font-weight: bold;
     position: absolute;
-    top: 12%;
+    top: 12.2%;
     left: 0;
     width: 100%;
     transform: translateY(-50%);
     text-align: center;
     pointer-events: none;
-    font-size: 12px;
+    font-size: 14px;
     padding: 0 8px;
   }
 
@@ -168,7 +170,14 @@
     padding-bottom: 30px;
 }
 
-
+@font-face {
+    font-family: 'KOTWFont';
+    src: url('img/KingOfWoodsFont.woff2') format('woff2'),
+         url('img/KingOfWoodsFont.woff') format('woff');
+    font-weight: 700; /* Match bold style */
+    font-style: normal;
+    font-display: swap;
+}
 
 
 
