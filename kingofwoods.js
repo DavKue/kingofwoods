@@ -266,67 +266,67 @@ function (dojo, declare) {
                     'type' : 1,
                     'name' : _('Assassin'),
                     'influence' : 0,
-                    'text' : _("Cover 1 card at any court. If you cover another Assassin, discard both."),
+                    'text' : _("Cover 1 card at any court. If you cover another <b>Assassin</b>, discard both."),
                 },
                 'Trader': {
                     'type' : 2,
                     'name' : _('Trader'),
                     'influence' : 1,
-                    'text' : _("Intrigue: Give this player facedown 1 card from your hand. They have to return 1 card with higher influence (or the highest)."),
+                    'text' : _("<b>Intrigue:</b> Give this player facedown 1 card from your hand. They have to return 1 card with higher influence (or the highest)."),
                 },
                 'Guard': {
                     'type' : 3,
                     'name' : _('Guard'),
                     'influence' : 2,
-                    'text' : _("At this court, an Assassin can only cover a Guard."),
+                    'text' : _("At this court, an <b>Assassin</b> can only cover a <b>Guard</b>."),
                 },
                 'Squire': {
                     'type' : 4,
                     'name' : _('Squire'),
                     'influence' : 2,
-                    'text' : _("If there is already a Squire at any court, you have to play this card. If another player‘s Knight steals a card from your hand, it has to be the Squire."),
+                    'text' : _("If there is already a <b>Squire</b> at any court, you have to play this card. If another player‘s <b>Knight</b> steals a card from your hand, it has to be the <b>Squire</b>."),
                 },
                 'Scholar': {
                     'type' : 5,
                     'name' : _('Scholar'),
                     'influence' : 3,
-                    'text' : _("Intrigue: Take a card with influence 4 or smaller (not the Assassin or the Scholar) from this court to your hand. If not possible, take a card with influence 5 or greater."),
+                    'text' : _("<b>Intrigue:</b> Take a card with influence 4 or smaller (not the <b>Assassin</b> or the <b>Scholar</b>) from this court to your hand. If not possible, take a card with influence 5 or greater."),
                 },
                 'Priest': {
                     'type' : 6,
                     'name' : _('Priest'),
                     'influence' : 3,
-                    'text' : _("You may put an additional card to the same court in order to take 1 card with lower influence from there to your hand (not the Assassin or the Jester)."),
+                    'text' : _("You may put an additional card to the same court in order to take 1 card with lower influence from there to your hand (not the <b>Assassin</b> or the <b>Jester</b>)."),
                 },
                 'Jester': {
                     'type' : 7,
                     'name' : _('Jester'),
                     'influence' : 4,
-                    'text' : _("A court with exactly 3 Jesters has no influence at all."),
+                    'text' : _("A court with exactly <b>3 Jesters</b> has no influence at all."),
                 },
                 'Treasurer': {
                     'type' : 8,
                     'name' : _('Treasurer'),
                     'influence' : 4,
-                    'text' : _("Intrigue: Draw 1 card from this player‘s hand."),
+                    'text' : _("<b>Intrigue:</b> Draw 1 card from this player‘s hand."),
                 },
                 'Knight': {
                     'type' : 9,
                     'name' : _('Knight'),
                     'influence' : 5,
-                    'text' : _("Intrigue: Look at this person‘s hand cards and take 1. If there is a Squire among the cards, you have to take him."),
+                    'text' : _("<b>Intrigue:</b> Look at this person‘s hand cards and take 1. If there is a <b>Squire</b> among the cards, you have to take him."),
                 },
                 'General': {
                     'type' : 10,
                     'name' : _('General'),
                     'influence' : 6,
-                    'text' : _("Intrigue: Exchange your hand cards with this player."),
+                    'text' : _("<b>Intrigue:</b> Exchange your hand cards with this player."),
                 },
                 'Princess': {
                     'type' : 11,
                     'name' : _('Princess'),
                     'influence' : 7,
-                    'text' : _("You can only play her if there are at least 3 uncovered cards at your court. The Princess always breaks ties in her favour."),
+                    'text' : _("You can <b>only</b> play her if there are at least 3 uncovered cards at your court. The <b>Princess</b> always breaks ties in her favour."),
                 },
                 'Backside': {
                     'type' : 12,
@@ -386,16 +386,36 @@ function (dojo, declare) {
                     this.addTooltip(itemDiv.id, tooltipHTML);
 
                     //add Card-Names
-                    // if (cardType != 'Backside') {
-                    //     const textDiv = document.createElement('div');
-                    //     textDiv.className = 'card-text';
-                    //     textDiv.innerHTML = cardInformation[cardType].name;
-                    //     itemDiv.appendChild(textDiv);
-                    // }
+                    if (cardType != 'Backside') {
+                        // Name
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'card-text';
+                        nameDiv.innerHTML = cardInformation[cardType].name;
+                        itemDiv.appendChild(nameDiv);
+
+                        // Description
+                        const descDiv = document.createElement('div');
+                        descDiv.className = 'card-description';
+                        descDiv.innerHTML = cardInformation[cardType].text;
+                        itemDiv.appendChild(descDiv);
+
+                        // Auto-size text
+                        this.adjustTextSize(descDiv);
+                    }
 
                 }
             };
 
+        },
+
+        adjustTextSize: function(element) {
+            const maxHeight = element.offsetHeight;
+            let fontSize = parseInt(window.getComputedStyle(element).fontSize);
+            
+            while (element.scrollHeight > maxHeight && fontSize > 8) {
+                fontSize--;
+                element.style.fontSize = `${fontSize}px`;
+            }
         },
 
         updateCardDisplay: function(cards) {

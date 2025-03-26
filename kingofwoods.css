@@ -126,6 +126,24 @@
     padding: 0 8px;
   }
 
+  .card-description {
+    position: absolute;
+    top: 71%; /* Adjust based on your sprite's text box position */
+    left: 8%;
+    width: 83%;
+    height: 23%; /* Match the invisible box height in your sprite */
+    font-size: 10px; /* Base size for English */
+    line-height: 1.2;
+    overflow: hidden;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2%;
+    text-align: center;
+    box-sizing: border-box;
+}
+
 .assassin-overlay {
     position: absolute;
     z-index: 2;
