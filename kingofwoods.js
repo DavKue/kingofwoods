@@ -598,6 +598,24 @@ function (dojo, declare) {
                 targetPlayerId: null
             };
 
+            // Add name and text elements
+            const cardInfo = this.cardInformation()['Assassin'];
+            
+            // Name element
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'card-text'; // Reuse standard card text styling
+            nameDiv.innerHTML = cardInfo.name;
+            div.appendChild(nameDiv);
+
+            // Description element
+            const descDiv = document.createElement('div');
+            descDiv.className = 'card-description';
+            descDiv.innerHTML = cardInfo.text;
+            div.appendChild(descDiv);
+            
+            // Adjust text size for description
+            this.adjustTextSize(descDiv);
+
             // // Add tooltip
             cardInformation = this.cardInformation();
             const tooltipHTML = `
@@ -613,6 +631,7 @@ function (dojo, declare) {
 
             return div;
         },
+
     assassinPosition: function(assassinId, coveredCardId) {
         const assassin = this.gamedatas.assassins[assassinId];
         if (!assassin || !coveredCardId) return;
