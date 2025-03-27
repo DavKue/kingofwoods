@@ -163,6 +163,33 @@
     z-index: 3;
 }
 
+
+/* Card preview in tooltip */
+.tooltip-card {
+    position: relative;
+    margin-bottom: 10px;
+    border-radius: 16px;
+}
+
+.tooltip-card-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 8%;
+    pointer-events: none;
+}
+
+/* Adjust default tooltip positioning */
+.tooltip {
+    max-width: none !important;
+}
+
+/* .midSizeDialog .imgtext {
+    display: none;
+} */
+
 /* Spacing between player areas */
 #player-tables > .player-board:not(:last-child) {
     margin-bottom: 40px;

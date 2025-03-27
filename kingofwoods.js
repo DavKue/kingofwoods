@@ -374,16 +374,11 @@ function (dojo, declare) {
                 );
                 
                 if (cardType) {
+                    const tooltipCard = this.createCardElement(cardType, 0.4);
                     const tooltipHTML = `
-                        <div class="card-tooltip">
-                            <div class="tooltip-header">
-                                <strong>${cardInformation[cardType].name}</strong>
-                                <div class="influence">Influence: ${cardInformation[cardType].influence}</div>
-                            </div>
-                            <div class="tooltip-text">${cardInformation[cardType].text}</div>
-                        </div>
+                            ${tooltipCard.outerHTML}
                     `;
-                    this.addTooltip(itemDiv.id, tooltipHTML);
+                    this.addTooltipHtml(itemDiv.id, tooltipHTML);
 
                     //add Card-Names
                     if (cardType != 'Backside') {
@@ -408,10 +403,71 @@ function (dojo, declare) {
 
         },
 
-        adjustTextSize: function(element) {
+        createCardElement: function(cardType, scale = 0.4, showBackside = false) {
+            const typeId = this.cardTypeMap[cardType];
+            const cardInfo = this.cardInformation()[cardType];
+            if (!typeId) return null;
+
+            // Calculate dimensions based on scale
+            const scaledWidth = this.baseCardWidth * scale;
+            const scaledHeight = this.baseCardHeight * scale;
+            const scaledSpriteWidth = this.baseSpriteWidth * scale;
+            const scaledSpriteHeight = this.baseSpriteHeight * scale;
+
+            // Calculate sprite position
+            const itemsPerRow = 4;
+            const index = typeId - 1;
+            const col = index % itemsPerRow;
+            const row = Math.floor(index / itemsPerRow);
+            const xPercent = (col / (itemsPerRow - 1)) * 100;
+            const yPercent = (row / 2) * 100; // 3 rows total (0-2)
+
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'tooltip-card';
+            cardDiv.style.cssText = `
+                width: ${scaledWidth}px;
+                height: ${scaledHeight}px;
+                background-image: url(${g_gamethemeurl}img/KotW_Cards_Spreadsheet.jpg);
+                background-size: ${scaledSpriteWidth}px ${scaledSpriteHeight}px;
+                background-position: ${xPercent}% ${yPercent}%;
+            `;
+
+            // Add text elements if not backside
+            if (!showBackside && cardType !== 'Backside') {
+                const textContainer = document.createElement('div');
+                textContainer.className = 'tooltip-card-content';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'card-text';
+                nameDiv.innerHTML = cardInfo.name;
+                
+                const descDiv = document.createElement('div');
+
+                const baseFontSize = Math.floor(14 * (scale / 0.20)); // Scale font size proportionally
+                nameDiv.style.fontSize = `${baseFontSize}px`;
+                descDiv.style.fontSize = `${baseFontSize - 2}px`;
+                
+                descDiv.className = 'card-description';
+                descDiv.innerHTML = cardInfo.text;
+                this.adjustTextSize(descDiv, scale);
+
+                textContainer.appendChild(nameDiv);
+                textContainer.appendChild(descDiv);
+                cardDiv.appendChild(textContainer);
+            }
+
+            return cardDiv;
+        },
+
+        adjustTextSize: function(element, scale = 0.20) {
+            const baseFontSize = 10 * (scale / 0.20); // Scale font relative to card size
             const maxHeight = element.offsetHeight;
-            let fontSize = parseInt(window.getComputedStyle(element).fontSize);
+            let fontSize = baseFontSize;
             
+            element.style.fontSize = `${fontSize}px`;
+            console.log('Scale:', scale);
+            console.log('Scroll Height:', element.scrollHeight);
+            console.log('max Heigth:', maxHeight);
             while (element.scrollHeight > maxHeight && fontSize > 7) {
                 fontSize--;
                 element.style.fontSize = `${fontSize}px`;
@@ -618,16 +674,11 @@ function (dojo, declare) {
 
             // // Add tooltip
             cardInformation = this.cardInformation();
+            const tooltipCard = this.createCardElement('Assassin', 0.4);
             const tooltipHTML = `
-                <div class="card-tooltip">
-                    <div class="tooltip-header">
-                        <strong>${cardInformation['Assassin'].name}</strong>
-                        <div class="influence">Influence: ${cardInformation['Assassin'].influence}</div>
-                    </div>
-                    <div class="tooltip-text">${cardInformation['Assassin'].text}</div>
-                </div>
+                    ${tooltipCard.outerHTML}
             `;
-            this.addTooltip(div.id, tooltipHTML);
+            this.addTooltipHtml(div.id, tooltipHTML);
 
             return div;
         },
