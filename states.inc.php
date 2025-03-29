@@ -92,7 +92,7 @@ $machinestates = [
         "type" => "game",
         "action" => "stNextPlayer",
         "updateGameProgression" => true,
-        "transitions" => ["endGame" => 99, "nextPlayer" => 10]
+        "transitions" => ["nextPlayer" => 10, "finishRound" => 50]
     ],
 
     12 => [
@@ -178,6 +178,24 @@ $machinestates = [
         "action" => "stBackToPreviousPlayer",
         "updateGameProgression" => true,
         "transitions" => ["nextPlayer" => 11]
+    ],
+
+    50 => [
+        "name" => "finishRound",
+        "description" => '',
+        "type" => "game",
+        "action" => "stFinishRound",
+        "updateGameProgression" => true,
+        "transitions" => ["resetRound" => 60, "endGame" => 99]
+    ],
+
+    60 => [
+        "name" => "resetRound",
+        "description" => '',
+        "type" => "game",
+        "action" => "stResetRound",
+        "updateGameProgression" => true,
+        "transitions" => ["dealCards" => 02]
     ],
 
     // Final state.

@@ -973,14 +973,14 @@ class Game extends \Table
         foreach ($players as $playerId => $player) {
             $playerCardsChunk = array_slice($playerCards, $playerIndex * $cardsPerPlayer, $cardsPerPlayer);
             foreach ($playerCardsChunk as $card) {
-                $this->DbQuery("UPDATE cards SET card_owner = '$playerId' WHERE card_id = '{$card['card_id']}'");
+                $this->DbQuery("UPDATE cards SET card_location = 'hand', card_owner = '$playerId', ontop_of = 0 WHERE card_id = '{$card['card_id']}'");
             }
             $playerIndex++;
         }
 
         // Set aside cards
         foreach ($asideCards as $card) {
-            $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID', card_location = 'aside' WHERE card_id = '{$card['card_id']}'");
+            $this->DbQuery("UPDATE cards SET card_location = 'aside', card_owner = 'noPlayerID', ontop_of = 0  WHERE card_id = '{$card['card_id']}'");
         }
 
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
@@ -1025,8 +1025,8 @@ class Game extends \Table
             }
             $playersSkipped = $playersSkipped + 1;
             if ($playersAmound === $playersSkipped) {
-                // END GAME!!!! WHOOOOOHOOOO!!!!!
-                $this->gamestate->nextState("endGame");
+                // Finish Round!!!
+                $this->gamestate->nextState("finishRound");
                 return;
             }
             $this->activeNextPlayer();
@@ -1088,6 +1088,61 @@ class Game extends \Table
         $this->gamestate->nextState("nextPlayer");
     }
 
+    public function stFinishRound(): void {
+        $roundsMode = $this->tableOptions->get(100);
+
+        if ($roundsMode === 1) {
+            $this->gamestate->nextState("endGame");
+        }
+
+        if ($roundsMode === 2) {
+            //has anybody won?
+            $playerScores = [];
+            $players = $this->loadPlayersBasicInfos();
+            $winner = false;
+            $allBeforeScores = $this->getCollectionFromDB( "SELECT player_id id, player_score score, rounds_before_points points FROM player" );
+
+            foreach($players as $player_id => $value) {
+                $currentScore = $allBeforeScores[$player_id]['score'];
+                $PointBefore = $allBeforeScores[$player_id]['points'];
+                $pointsTotal = $currentScore + $PointBefore;
+                if ($pointsTotal > 41) {
+                    $winner = true;
+                }
+                $playerScores[$player_id] = $pointsTotal;
+                $this->DbQuery( "UPDATE player SET rounds_before_points=$pointsTotal WHERE player_id='$player_id'" );
+            }
+
+            //End game or restart round
+            if ($winner === true) {
+                foreach($players as $player_id => $value) {
+                    $this->DbQuery( "UPDATE player SET player_score=$playerScores[$player_id] WHERE player_id='$player_id'" );
+                }
+                
+                $this->gamestate->nextState("endGame");
+            } else {
+                $this->gamestate->nextState("resetRound");
+            }
+        }
+
+        if ($roundsMode === 3 || $roundsMode === 4) {
+            // Find each players amount of wins
+        }
+    }
+
+    public function stResetRound(): void {
+        $players = $this->loadPlayersBasicInfos();
+        foreach($players as $player_id => $value) {
+            $this->DbQuery( "UPDATE player SET player_score=0 WHERE player_id='$player_id'" );
+            $this->DbQuery( "UPDATE player SET player_score_aux=0 WHERE player_id='$player_id'" );
+            $this->notify->all("score", '', [
+                "player_id" => $player_id,
+                "player_score" => 0,
+            ]);
+        }
+
+        $this->gamestate->nextState("dealCards");
+    }
 
     /**
      * Migrate database.
@@ -1234,6 +1289,9 @@ class Game extends \Table
 
         // Init global values with their initial values.
 
+        // Create empty 'currentRound'-Entry
+        $sql = "INSERT INTO ingame (name, value) VALUES ('currentRound', 1)";
+        $this->DbQuery($sql);
         // Create empty 'targetPlayer'-Entry
         $sql = "INSERT INTO ingame (name, value) VALUES ('targetPlayer', 'noPlayerID')";
         $this->DbQuery($sql);

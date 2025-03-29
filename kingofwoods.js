@@ -1264,7 +1264,11 @@ function (dojo, declare) {
                             });
                         }
                     });
-                    break;         
+                    break;  
+                    
+                case 'stResetRound':
+                    
+                    break;
             }
         },
 

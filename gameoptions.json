@@ -1,1 +1,38 @@
-{}
+{
+    "100": {
+        "name": "Rounds",
+        "values": {
+          "1": {
+            "name": "1 Round",
+            "tmdisplay": "1 Round"
+          },
+          "2": {
+            "name": "Until one has 42 points",
+            "tmdisplay": "Until 42 Points"
+          },
+          "3": {
+            "name": "Until one has 2 wins",
+            "tmdisplay": "Until 2 wins"
+          },
+          "4": {
+            "name": "Until one has 3 wins",
+            "tmdisplay": "Until 3 wins"
+          }
+        },
+        "default": 2
+      },
+    "101": {
+      "name": "Complexity",
+      "values": {
+        "1": {
+          "name": "Standard",
+          "tmdisplay": "Standard"
+        },
+        "2": {
+          "name": "Newbie (Without 'Scholar' and 'Priest')",
+          "tmdisplay": "Newbie"
+        }
+      },
+      "default": 1
+    }
+}
