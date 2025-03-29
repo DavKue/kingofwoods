@@ -1221,12 +1221,15 @@ function (dojo, declare) {
     
                     });
 
-                    this.statusBar.addActionButton(
-                        _("Pass"),
-                        () => this.priestPass(),
-                        { color: 'secondary' }
-                    );
-    
+                    const isActive = this.isCurrentPlayerActive();
+                    if (isActive === true) {
+                        this.statusBar.addActionButton(
+                            _("Pass"),
+                            () => this.priestPass(),
+                            { color: 'secondary' }
+                        );
+                    }
+
                     break;
                 case 'selectionPriestSecond':
                     // Enable selection only in target player's court

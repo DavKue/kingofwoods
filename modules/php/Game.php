@@ -170,8 +170,15 @@ class Game extends \Table
             $sql = "SELECT * FROM cards WHERE card_owner = $target_player_id";
             $targetCards = $this->getCollectionFromDB($sql);
 
+            $handCards = false;
+            foreach ($targetCards as $card) {
+                if ($card['card_location'] == 'hand') {
+                    $handCards = true;
+                }
+            }
+
             $cardIds = array_column($targetCards, 'card_id');
-            if (empty($cardIds)) {
+            if ($handCards == false) {
                 $this->notify->all("logText", clienttranslate('Treasurer-Effect: ${player_name} took no card, because ${target_player} had no cards in the hand'), [
                     "player_name" => $this->getPlayerNameById($player_id),
                     "target_player" => $this->getPlayerNameById($target_player_id),
@@ -239,6 +246,23 @@ class Game extends \Table
 
         // at the end of the action, move to the next state
         if ($card_name == 'Knight' && $player_id != $target_player_id) {
+            $sql = "SELECT * FROM cards WHERE card_owner = '$target_player_id'";
+            $cards = $this->getCollectionFromDB($sql);
+            $targetHand = false;
+            foreach ($cards as $card) {
+                if ($card['card_location'] == 'hand') {
+                    $targetHand = true;
+                }
+            }
+            if ($targetHand == false) {
+                $this->notify->all("logText", clienttranslate('Knight-Effect: ${target_player} had no hand-cards to choose from'), [
+                    "player_name" => $this->getPlayerNameById($player_id),
+                    "target_player" => $this->getPlayerNameById($target_player_id),
+                ]);
+                $this->gamestate->nextState("playCard");
+                return;
+            }
+
             $res = json_encode($target_player_id);
             $this->DbQuery(
                 "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
@@ -259,10 +283,10 @@ class Game extends \Table
             $playerCard = false;
             $targetCard = false;
             foreach ($cards as $card) {
-                if ($card['card_owner'] == $player_id) {
+                if ($card['card_owner'] == $player_id && $card['card_location'] == 'hand') {
                     $playerCard = true;
                 }
-                if ($card['card_owner'] == $target_player_id) {
+                if ($card['card_owner'] == $target_player_id && $card['card_location'] == 'hand') {
                     $targetCard = true;
                 }
             }
@@ -286,13 +310,13 @@ class Game extends \Table
             $targetCards = $this->getCollectionFromDB($sql);
             $coveredCards = [];
             foreach ($cards as $card) {
-                if ($card['ontop_of'] != 0) {
+                if ($card['ontop_of'] != 0 && $card['card_location'] == 'court') {
                     $coveredCards[] = $card['ontop_of'];
                 }
             }
             $validCard = false;
             foreach ($targetCards as $card) {
-                if ($card['card_type'] != 'Assassin' && $card['card_type'] != 'Scholar' && !in_array($card['card_id'], $coveredCards)) {
+                if ($card['card_location'] == 'court' && $card['card_type'] != 'Assassin' && $card['card_type'] != 'Scholar' && !in_array($card['card_id'], $coveredCards)) {
                     $validCard = true;
                 }
             }
@@ -685,14 +709,14 @@ class Game extends \Table
         $targetPlayerCards = $this->getCollectionFromDB($sql2);
 
         foreach ($cards as $card) {
-            if ($card['ontop_of'] != 0) {
+            if ($card['ontop_of'] != 0 && $card['card_location'] == 'court') {
                 $coveredCards[] = $card['ontop_of'];
             }
         }
 
         $validCard = false;
         foreach ($targetPlayerCards as $card) {
-            if ($this->cards[$card['card_type']]['influence'] < $targetInfluence && $card['card_type'] != 'Assassin' && $card['card_type'] != 'Jester' && !in_array($card['card_id'], $coveredCards)) {
+            if ($card['card_location'] == 'court' && $this->cards[$card['card_type']]['influence'] < $targetInfluence && $card['card_type'] != 'Assassin' && $card['card_type'] != 'Jester' && !in_array($card['card_id'], $coveredCards)) {
                 $validCard = true;
             }   
         }
