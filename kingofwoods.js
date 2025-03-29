@@ -374,9 +374,18 @@ function (dojo, declare) {
                 );
                 
                 if (cardType) {
-                    const tooltipCard = this.createCardElement(cardType, 0.4);
+                    // const tooltipCard = this.createCardElement(cardType, 0.4, itemDiv.id);
+                    // const tooltipHTML = `
+                    //         ${tooltipCard.outerHTML}
+                    // `;
                     const tooltipHTML = `
-                            ${tooltipCard.outerHTML}
+                        <div class="card-tooltip">
+                            <div class="tooltip-header">
+                                <strong>${cardInformation[cardType].name}</strong>
+                            </div>
+                            <div class="tooltip-text">Influence: ${cardInformation[cardType].influence}</div>
+                            <div class="tooltip-text">${cardInformation[cardType].text}</div>
+                        </div>
                     `;
                     this.addTooltipHtml(itemDiv.id, tooltipHTML);
 
@@ -403,7 +412,7 @@ function (dojo, declare) {
 
         },
 
-        createCardElement: function(cardType, scale = 0.4, showBackside = false) {
+        createCardElement: function(cardType, scale = 0.4, itemDivID) {
             const typeId = this.cardTypeMap[cardType];
             const cardInfo = this.cardInformation()[cardType];
             if (!typeId) return null;
@@ -433,7 +442,7 @@ function (dojo, declare) {
             `;
 
             // Add text elements if not backside
-            if (!showBackside && cardType !== 'Backside') {
+            if (cardType !== 'Backside') {
                 const textContainer = document.createElement('div');
                 textContainer.className = 'tooltip-card-content';
                 
@@ -449,7 +458,17 @@ function (dojo, declare) {
                 
                 descDiv.className = 'card-description';
                 descDiv.innerHTML = cardInfo.text;
-                this.adjustTextSize(descDiv, scale);
+                console.log('DIV ID', itemDivID);
+                const originalDesc = document.querySelector(`#${itemDivID} .card-description`);
+                console.log('originalDesc', document.querySelector(`#${itemDivID}`));
+                if (originalDesc && originalDesc.offsetParent !== null) { // Ensure element is visible
+                    const originalSize = window.getComputedStyle(originalDesc).fontSize;
+                    descDiv.style.fontSize = `calc(${originalSize} * ${scale / 0.20})`;
+                } else {
+                    // Fallback calculation
+                    const baseSize = 10 * (scale / 0.20); // 10px base * scale factor
+                    descDiv.style.fontSize = `${baseSize}px`;
+                }
 
                 textContainer.appendChild(nameDiv);
                 textContainer.appendChild(descDiv);
@@ -465,9 +484,6 @@ function (dojo, declare) {
             let fontSize = baseFontSize;
             
             element.style.fontSize = `${fontSize}px`;
-            console.log('Scale:', scale);
-            console.log('Scroll Height:', element.scrollHeight);
-            console.log('max Heigth:', maxHeight);
             while (element.scrollHeight > maxHeight && fontSize > 7) {
                 fontSize--;
                 element.style.fontSize = `${fontSize}px`;
@@ -674,11 +690,20 @@ function (dojo, declare) {
 
             // // Add tooltip
             cardInformation = this.cardInformation();
-            const tooltipCard = this.createCardElement('Assassin', 0.4);
-            const tooltipHTML = `
-                    ${tooltipCard.outerHTML}
-            `;
-            this.addTooltipHtml(div.id, tooltipHTML);
+            // const tooltipCard = this.createCardElement('Assassin', 0.4, div.id);
+            // const tooltipHTML = `
+            //         ${tooltipCard.outerHTML}
+            // `;
+            // const tooltipHTML = `
+            //     <div class="card-tooltip">
+            //         <div class="tooltip-header">
+            //             <strong>${cardInformation['Assassin'].name}</strong>
+            //         </div>
+            //         <div class="tooltip-text">Influence: ${cardInformation['Assassin'].influence}</div>
+            //         <div class="tooltip-text">${cardInformation['Assassin'].text}</div>
+            //     </div>
+            // `;
+            // this.addTooltipHtml(div.id, tooltipHTML);
 
             return div;
         },

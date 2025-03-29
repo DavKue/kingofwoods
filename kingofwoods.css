@@ -186,9 +186,15 @@
     max-width: none !important;
 }
 
-/* .midSizeDialog .imgtext {
-    display: none;
-} */
+.tooltip-header {
+    font-family: 'KOTWFont', serif;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.tooltip-text {
+    font-size: 14px;
+}
 
 /* Spacing between player areas */
 #player-tables > .player-board:not(:last-child) {
