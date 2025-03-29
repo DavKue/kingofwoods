@@ -1183,41 +1183,7 @@ function (dojo, declare) {
                             }
                         }
                     });
-                    break;   
-                case 'selectionPriestSecond':
-                    // Enable selection only in target player's court
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
-                        const isActive = this.isCurrentPlayerActive();
-                        hand.setSelectionMode(0);
-                        court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
-        
-                        if (isTargetPlayer && isActive) {
-                            //Check Influence of Cards in Hand
-                            const cardInformation = this.cardInformation();
-                            const targetInfluence = this.gamedatas.targetInfluence;
-                            const blockedCard = this.gamedatas.blockedCard;
-                            coveredCards = [];
-                            Object.values(this.gamedatas.assassins).forEach(assassin => {
-                                coveredCards.push(assassin.coveredCardId);
-                            });
-                            validCardsAll = [];
-    
-                            court.items.forEach(item => {
-                                const itemType = this.getCardType(item.id);
-                                if (!coveredCards.includes(item.id.toString()) && targetInfluence > cardInformation[itemType].influence && itemType != 'Assassin' && itemType != 'Jester' && item.id != blockedCard) {
-                                    validCardsAll.push(item.id.toString());
-                                }
-                            });
-                            court.items.forEach(item => {
-                                const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
-                                if (!validCardsAll.includes(item.id.toString())) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                }
-                            });
-                        }
-                    });
-                    break;     
+                    break;       
                 case 'selectionPriestFirst':
                     playedSquireIds = this.gamedatas.cards
                     .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
@@ -1261,7 +1227,41 @@ function (dojo, declare) {
                         { color: 'secondary' }
                     );
     
-                    break;        
+                    break;
+                case 'selectionPriestSecond':
+                    // Enable selection only in target player's court
+                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
+                        const isActive = this.isCurrentPlayerActive();
+                        hand.setSelectionMode(0);
+                        court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
+            
+                        if (isTargetPlayer && isActive) {
+                            //Check Influence of Cards in Hand
+                            const cardInformation = this.cardInformation();
+                            const targetInfluence = this.gamedatas.targetInfluence;
+                            const blockedCard = this.gamedatas.blockedCard;
+                            coveredCards = [];
+                            Object.values(this.gamedatas.assassins).forEach(assassin => {
+                                coveredCards.push(assassin.coveredCardId);
+                            });
+                            validCardsAll = [];
+        
+                            court.items.forEach(item => {
+                                const itemType = this.getCardType(item.id);
+                                if (!coveredCards.includes(item.id.toString()) && targetInfluence > cardInformation[itemType].influence && itemType != 'Assassin' && itemType != 'Jester' && item.id != blockedCard) {
+                                    validCardsAll.push(item.id.toString());
+                                }
+                            });
+                            court.items.forEach(item => {
+                                const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
+                                if (!validCardsAll.includes(item.id.toString())) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                            });
+                        }
+                    });
+                    break;         
             }
         },
 

@@ -172,6 +172,10 @@ class Game extends \Table
 
             $cardIds = array_column($targetCards, 'card_id');
             if (empty($cardIds)) {
+                $this->notify->all("logText", clienttranslate('Treasurer-Effect: ${player_name} took no card, because ${target_player} had no cards in the hand'), [
+                    "player_name" => $this->getPlayerNameById($player_id),
+                    "target_player" => $this->getPlayerNameById($target_player_id),
+                ]);
                 throw new \BgaUserException('No cards available for selection.');
             } else {
                 $randomIndex = random_int(0, count($cardIds) - 1);
@@ -250,6 +254,24 @@ class Game extends \Table
             return;
         }
         if ($card_name == 'Trader' && $player_id != $target_player_id) {
+            $sql = "SELECT * FROM cards";
+            $cards = $this->getCollectionFromDB($sql);
+            $playerCard = false;
+            $targetCard = false;
+            foreach ($cards as $card) {
+                if ($card['card_owner'] == $player_id) {
+                    $playerCard = true;
+                }
+                if ($card['card_owner'] == $target_player_id) {
+                    $targetCard = true;
+                }
+            }
+            if ($playerCard == false || $targetCard == false) {
+                $this->notify->all("logText", clienttranslate('Trader-Effect: Trade not possible'), ['']);
+                $this->gamestate->nextState("playCard");
+                return;
+            }
+
             $res = json_encode($target_player_id);
             $this->DbQuery(
                 "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
@@ -260,14 +282,36 @@ class Game extends \Table
             return;
         }
         if ($card_name == 'Scholar' && $player_id != $target_player_id) {
-            $res = json_encode($target_player_id);
-            $this->DbQuery(
-                "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
-            );
-            $this->notify->all('targetPlayer', '', [$target_player_id] );
+            $sql = "SELECT * FROM cards WHERE card_owner = $target_player_id";
+            $targetCards = $this->getCollectionFromDB($sql);
+            $coveredCards = [];
+            foreach ($cards as $card) {
+                if ($card['ontop_of'] != 0) {
+                    $coveredCards[] = $card['ontop_of'];
+                }
+            }
+            $validCard = false;
+            foreach ($targetCards as $card) {
+                if ($card['card_type'] != 'Assassin' && $card['card_type'] != 'Scholar' && !in_array($card['card_id'], $coveredCards)) {
+                    $validCard = true;
+                }
+            }
 
-            $this->gamestate->nextState("playedScholar");
-            return;
+            if ($validCard === false) {
+                $this->notify->all("logText", clienttranslate('Scholar-Effect: There was no valid card in the court of ${target_player}'), [
+                    "player_name" => $this->getPlayerNameById($player_id),
+                    "target_player" => $this->getPlayerNameById($target_player_id),
+                ]);
+            } else {
+                $res = json_encode($target_player_id);
+                $this->DbQuery(
+                    "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+                );
+                $this->notify->all('targetPlayer', '', [$target_player_id] );
+    
+                $this->gamestate->nextState("playedScholar");
+                return;
+            }
         }
         if ($card_name == 'Priest') {
             $res = json_encode($target_player_id);
@@ -636,6 +680,45 @@ class Game extends \Table
         }
 
         $targetInfluence = $this->cards[$card_name]['influence'];
+
+        $sql2 = "SELECT * FROM cards WHERE card_owner = $targetPlayer";
+        $targetPlayerCards = $this->getCollectionFromDB($sql2);
+
+        foreach ($cards as $card) {
+            if ($card['ontop_of'] != 0) {
+                $coveredCards[] = $card['ontop_of'];
+            }
+        }
+
+        $validCard = false;
+        foreach ($targetPlayerCards as $card) {
+            if ($this->cards[$card['card_type']]['influence'] < $targetInfluence && $card['card_type'] != 'Assassin' && $card['card_type'] != 'Jester' && !in_array($card['card_id'], $coveredCards)) {
+                $validCard = true;
+            }   
+        }
+
+        if ($validCard === false) {
+            $this->notify->all("logText", clienttranslate('Priest-Effect: There was no valid card in the court of ${target_player}'), [
+                "player_name" => $this->getPlayerNameById($player_id),
+                "target_player" => $this->getPlayerNameById($targetPlayer),
+            ]);
+
+            $res = json_encode('noPlayerID');
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+            );
+            $this->notify->all('targetPlayer', '', ['noPlayerID'] );
+    
+            $res2 = json_encode(0);
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res2' WHERE name = 'blockedCard'"
+            );
+            $this->notify->all('blockedCard', '', [0] );
+
+            $this->gamestate->nextState("pass");
+            return;
+        }
+
         $res3 = json_encode($targetInfluence);
         $this->DbQuery(
             "UPDATE ingame SET value='$res3' WHERE name = 'targetInfluence'"
