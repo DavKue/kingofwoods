@@ -991,9 +991,10 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($playerId, 'cardMoved', '', array_values($hiddenCards) );
+            $this->notify->player($playerId, 'cardMoved', '', [
+                "cards" => array_values($hiddenCards),
+            ]);
         }
-
         $this->gamestate->nextState("nextPlayer");
     } 
 
@@ -1140,6 +1141,13 @@ class Game extends \Table
                 "player_score" => 0,
             ]);
         }
+
+        $this->DbQuery("UPDATE cards SET card_location = 'aside', card_owner = 'noPlayerID', ontop_of = 0");
+        $sql = "SELECT * FROM cards";
+        $cards = $this->getCollectionFromDB($sql);
+        $this->notify->all( 'cardMoved', '', [
+            "cards" => array_values($cards),
+        ]);
 
         $this->gamestate->nextState("dealCards");
     }

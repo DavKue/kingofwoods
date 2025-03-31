@@ -505,7 +505,13 @@ function (dojo, declare) {
                     this.playerStocks[targetPlayerId].hand;
                 const typeId = this.cardTypeMap[card.card_type] || this.cardTypeMap['Backside'];
 
-                if (!toStock) return;
+                if (!toStock && !fromStock) return;
+
+                if (!toStock && fromStock) {
+                    fromStock.removeFromStockById(
+                        card.card_id, 
+                    );
+                }
 
                 // Manage Assassin-Play
                 if (card.card_location == 'court' && card.card_type == 'Assassin') {
@@ -1265,10 +1271,6 @@ function (dojo, declare) {
                         }
                     });
                     break;  
-                    
-                case 'stResetRound':
-                    
-                    break;
             }
         },
 
@@ -1332,8 +1334,9 @@ function (dojo, declare) {
                             allCards[index] = updatedCard;
                         }
                     });
-                    this.gamedatas.cards = allCards;
 
+                this.gamedatas.cards = allCards;
+                console.log('Cards Notif:', cards);
                 this.updateCardDisplay(cards);
             });
             this.notifqueue.setSynchronous('cardMoved', 700);
