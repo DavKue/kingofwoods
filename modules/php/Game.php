@@ -378,7 +378,7 @@ class Game extends \Table
                 $card_name = $card['card_type'];
                 $validCard = true;
             }
-            if ($card['card_type'] == 'Squire') {
+            if ($card['card_type'] == 'Squire' && $card['card_location'] == 'hand') {
                 $squireInHand = true;
             }
         }
@@ -707,6 +707,8 @@ class Game extends \Table
 
         $sql2 = "SELECT * FROM cards WHERE card_owner = $targetPlayer";
         $targetPlayerCards = $this->getCollectionFromDB($sql2);
+
+        $coveredCards = [];
 
         foreach ($cards as $card) {
             if ($card['ontop_of'] != 0 && $card['card_location'] == 'court') {
