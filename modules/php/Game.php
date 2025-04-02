@@ -171,13 +171,15 @@ class Game extends \Table
             $targetCards = $this->getCollectionFromDB($sql);
 
             $handCards = false;
+            $handCardsCollection = [];
             foreach ($targetCards as $card) {
                 if ($card['card_location'] == 'hand') {
                     $handCards = true;
+                    $handCardsCollection[] = $card;
                 }
             }
 
-            $cardIds = array_column($targetCards, 'card_id');
+            $cardIds = array_column($handCardsCollection, 'card_id');
             if ($handCards == false) {
                 $this->notify->all("logText", clienttranslate('Treasurer-Effect: ${player_name} took no card, because ${target_player} had no cards in the hand'), [
                     "player_name" => $this->getPlayerNameById($player_id),
