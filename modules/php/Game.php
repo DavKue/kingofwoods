@@ -1096,32 +1096,64 @@ class Game extends \Table
     public function stFinishRound(): void {
         $roundsMode = $this->tableOptions->get(100);
 
+        $scoresRound = [];
+        $scoresTotal = [];
+        $scoreHighest = 0;
+        $players = $this->loadPlayersBasicInfos();
+        $winnerByPoints = false;
+        $winnersRound = [];
+        $mostWins = 0;
+        $allBeforeScores = $this->getCollectionFromDB( "SELECT player_id id, player_score score, player_score_aux tiebreaker,rounds_before_points points, rounds_won rounds_won FROM player" );
+
+        foreach($players as $player_id => $value) {
+            $currentScore = $allBeforeScores[$player_id]['score'];
+            $scoresRound[$player_id] = $currentScore;
+
+            //Find Round Winners
+            if ($scoreHighest < $currentScore) {
+                $currentScore = $scoreHighest;
+                $winnersRound = [];
+                $winnersRound[] = $player_id;
+            }
+            if ($scoreHighest === $currentScore) {
+                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] < $allBeforeScores[$player_id]['tiebreaker']) {
+                    $winnersRound = [];
+                    $winnersRound[] = $player_id;
+                }
+                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] = $allBeforeScores[$player_id]['tiebreaker']) {
+                    $winnersRound[] = $player_id;
+                }
+            }
+
+            //Manage Points
+            $scoresTotal[$player_id] = $currentScore;
+            $PointBefore = $allBeforeScores[$player_id]['points'];
+            $pointsTotal = $currentScore + $PointBefore;
+            if ($pointsTotal > 41) {
+                $winnerByPoints = true;
+            }
+            $scoresTotal[$player_id] = $pointsTotal;
+            $this->DbQuery( "UPDATE player SET rounds_before_points=$pointsTotal WHERE player_id='$player_id'" );
+        }
+
+        foreach ($winnersRound as $winnerID) {
+            $rounds_won = $allBeforeScores[$player_id]['tiebreaker'] + 1;
+            $this->DbQuery( "UPDATE player SET rounds_won = $rounds_won WHERE player_id='$winnerID'" );
+            if ($mostWins < $rounds_won) {
+                $mostWins = $rounds_won;
+            }
+        }
+
+        //Handle Game Modes and Transitions
         if ($roundsMode === 1) {
             $this->gamestate->nextState("endGame");
         }
 
         if ($roundsMode === 2) {
-            //has anybody won?
-            $playerScores = [];
-            $players = $this->loadPlayersBasicInfos();
-            $winner = false;
-            $allBeforeScores = $this->getCollectionFromDB( "SELECT player_id id, player_score score, rounds_before_points points FROM player" );
-
-            foreach($players as $player_id => $value) {
-                $currentScore = $allBeforeScores[$player_id]['score'];
-                $PointBefore = $allBeforeScores[$player_id]['points'];
-                $pointsTotal = $currentScore + $PointBefore;
-                if ($pointsTotal > 41) {
-                    $winner = true;
-                }
-                $playerScores[$player_id] = $pointsTotal;
-                $this->DbQuery( "UPDATE player SET rounds_before_points=$pointsTotal WHERE player_id='$player_id'" );
-            }
-
             //End game or restart round
-            if ($winner === true) {
+            if ($winnerByPoints === true) {
                 foreach($players as $player_id => $value) {
-                    $this->DbQuery( "UPDATE player SET player_score=$playerScores[$player_id] WHERE player_id='$player_id'" );
+                    $this->DbQuery( "UPDATE player SET player_score=$scoresTotal[$player_id] WHERE player_id='$player_id'" );
                 }
                 
                 $this->gamestate->nextState("endGame");
@@ -1131,7 +1163,26 @@ class Game extends \Table
         }
 
         if ($roundsMode === 3 || $roundsMode === 4) {
-            // Find each players amount of wins
+            if ($roundsMode === 3) {
+                $targetRoundWins = 2;
+            } else {
+                $targetRoundWins = 3;
+            }
+
+            if ($mostWins === $targetRoundWins) {
+                $allRoundsWon = $this->getCollectionFromDB( "SELECT rounds_won rounds_won FROM player" );
+
+
+                foreach($players as $player_id => $value) {
+                    $playerRoundsWon = $allRoundsWon[$player_id]['rounds_won'];
+                    $this->DbQuery( "UPDATE player SET player_score=$playerRoundsWon, player_score_aux=0 WHERE player_id='$player_id'" );
+                }
+
+                $this->gamestate->nextState("endGame");
+            } else {
+                $this->gamestate->nextState("resetRound");
+            }
+
         }
     }
 
