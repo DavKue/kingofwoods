@@ -124,7 +124,10 @@ function (dojo, declare) {
             this.gamedatas.assassins = this.gamedatas.assassins || {};
 
             //Setup Player Panels for Round-Scores
-            this.initializePlayerPanels();
+            this.updatePlayerPanels();
+
+            //Setup Amount of Cards-info
+            this.updateGlobalCardCounts(); 
 
             console.log( "Ending game setup" );
         },
@@ -216,7 +219,7 @@ function (dojo, declare) {
         */
 
 
-        initializePlayerPanels: function () {
+        updatePlayerPanels: function () {
             Object.values(this.gamedatas.players).forEach(player => {
                 const infoDiv = this.getPlayerPanelElement(player.id);
                 if (!infoDiv) return;
@@ -235,6 +238,31 @@ function (dojo, declare) {
                         infoDiv.innerHTML = '';
                 }
             });
+        },
+
+        updateGlobalCardCounts: function() {
+            const cardInformation = this.cardInformation();
+            // Generate HTML
+            const content = this.gamedatas.cardsInPlay.map((card) => {
+                const [type, count] = Object.entries(card)[0];
+                const name = cardInformation[type].name;
+                return `
+                    <div class="card-type-row">
+                        <span class="card-type-count">${count}x</span>
+                        <span class="card-type-name">${name}</span>
+                    </div>
+                `;
+            }).join('');
+        
+            const playerBoardsContainer = $('player_boards');
+            if (playerBoardsContainer) {
+                const infoPanel = document.createElement('div');
+                infoPanel.className = 'player-board roundedbox kotw-global-info';
+                infoPanel.innerHTML = content;
+                
+            // Insert at the top of player boards
+            playerBoardsContainer.insertBefore(infoPanel, playerBoardsContainer.firstChild);
+            }
         },
 
         initializePlayerStocks: function(players) {
@@ -1460,7 +1488,7 @@ function (dojo, declare) {
                     this.gamedatas.players[player.id].rounds_before_points = player.rounds_before_points;
                     this.gamedatas.players[player.id].rounds_won = player.rounds_won;
                 });
-                this.initializePlayerPanels();
+                this.updatePlayerPanels();
 
                 // Reset Player Stocks
                 Object.values(this.playerStocks).forEach(({ hand, court }) => {

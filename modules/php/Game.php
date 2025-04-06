@@ -1344,6 +1344,26 @@ class Game extends \Table
         $gamestate = $this->gamestate->state();
 
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
+
+        $amountOfPlayers = $this->getPlayersNumber();
+        $easyMode = $this->tableOptions->get(101);
+        $cardsInPlay = [];
+        foreach($this->cards as $name => $card) {
+            $amountCard = $card['amount2Players'];
+            if ($amountOfPlayers == 3) {
+                $amountCard = $card['amount3Players'];
+            }
+            if ($amountOfPlayers == 4) {
+                $amountCard = $card['amount4Players'];
+            }
+            if ($easyMode == 2 && $card['beginner'] == false) {
+                $amountCard = 0;
+            } else {
+                $cardsInPlay[] = [$name => $amountCard];
+            }
+        }
+        $result['cardsInPlay'] = $cardsInPlay;
+
         $hiddenCards = $allCards;
         foreach ($allCards as $index => $card) {
             if ($gamestate['name'] == 'selectionKnight') {
