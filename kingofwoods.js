@@ -543,14 +543,14 @@ function (dojo, declare) {
                     if (fromStock && fromStock !== toStock) {
                         this.slideToObject( $(`${fromStock.container_div.id}_item_${card.card_id}`), `${toStock.container_div.id}_item_${card.ontop_of}`,  this.slideDuration).play();
                         setTimeout(() => {
-                            this.assassinCreateElement(card.card_id);
+                            this.assassinCreateElement(card.card_id, card.ontop_of, targetPlayerId);
                             this.assassinPosition(card.card_id, card.ontop_of);
                             fromStock.removeFromStockById(
                                 card.card_id, 
                             );
                         }, this.slideDuration);
                     } else {
-                        this.assassinCreateElement(card.card_id);
+                        this.assassinCreateElement(card.card_id, card.ontop_of, targetPlayerId);
                         this.assassinPosition(card.card_id, card.ontop_of);
                     }
                     return;
@@ -666,7 +666,7 @@ function (dojo, declare) {
         },
 
         //manage Assassin Cards ontop of other cards:
-        assassinCreateElement: function(cardId) {
+        assassinCreateElement: function(cardId, coveredCardId, targetPlayerId) {
             const assassinTypeId = this.cardTypeMap['Assassin'];
             const assassinIndex = assassinTypeId - 1; // Get 0-based index
             
@@ -697,8 +697,8 @@ function (dojo, declare) {
             this.gamedatas.assassins = this.gamedatas.assassins || {};
             this.gamedatas.assassins[cardId] = {
                 div: div,
-                coveredCardId: null,
-                targetPlayerId: null
+                coveredCardId: coveredCardId,
+                targetPlayerId: targetPlayerId
             };
 
             // Add name and text elements
@@ -1100,24 +1100,26 @@ function (dojo, declare) {
                         hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
                         court.setSelectionMode(0); // Never select from courts
 
-                        //Check mandatory Squire Play
-                        const squireIds = hand.items
-                        .filter(item => this.getCardType(item.id) === 'Squire')
-                        .map(squire => squire.id.toString());
-                        if (playedSquireIds.length > 0 && squireIds.length > 0) {
-                            // Add CSS classes to non-Squires
-                            hand.items.forEach(item => {
-                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                if (!squireIds.includes(item.id.toString())) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                }
-                            });
-                        }
+                        if (isCurrentPlayer && isActive) {
+                            //Check mandatory Squire Play
+                            const squireIds = hand.items
+                            .filter(item => this.getCardType(item.id) === 'Squire')
+                            .map(squire => squire.id.toString());
 
-                        if (court.items.length < 3) {
+                            //check covered cards in court
+                            coveredCards = [];
+                            Object.values(this.gamedatas.assassins).forEach(assassin => {
+                                coveredCards.push(assassin.coveredCardId);
+                            });
+                            const courtIds = court.items
+                            .filter(item => !coveredCards.includes(item.id.toString()))
+                            .map(item => item.id.toString());
+
                             hand.items.forEach(item => {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                if (this.getCardType(item.id) === 'Princess') {
+                                if ((playedSquireIds.length > 0 && squireIds.length > 0) && (!squireIds.includes(item.id.toString())) ||
+                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess')
+                                    ) {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
                                 }
                             });
@@ -1285,6 +1287,15 @@ function (dojo, declare) {
                         .filter(item => this.getCardType(item.id) === 'Squire')
                         .map(squire => squire.id.toString());
 
+                        //check covered cards in court
+                        coveredCards = [];
+                        Object.values(this.gamedatas.assassins).forEach(assassin => {
+                            coveredCards.push(assassin.coveredCardId);
+                        });
+                        const courtIds = court.items
+                        .filter(item => !coveredCards.includes(item.id.toString()))
+                        .map(item => item.id.toString());
+
                         if (isCurrentPlayer && isActive) {
                             hand.items.forEach(item => {
                                 const itemType = this.getCardType(item.id);
@@ -1292,7 +1303,7 @@ function (dojo, declare) {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                 if (
                                     (playedSquireIds.length > 0 && squireIds.length > 0 && !squireIds.includes(item.id.toString())) ||
-                                    (court.items.length < 3 && this.getCardType(item.id) === 'Princess') ||
+                                    (courtIds < 3 && this.getCardType(item.id) === 'Princess') ||
                                     (itemInfluence <= lowestInfluence)
                                     ) {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
