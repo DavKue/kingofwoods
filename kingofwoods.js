@@ -1393,6 +1393,30 @@ function (dojo, declare) {
             });
             this.notifqueue.setSynchronous('blockedCard', 100);
 
+            dojo.subscribe('newRound', this, notif => {
+                //Update Global Scores
+                this.gamedatas.currentRound = notif.args.currentRound + 1;
+                Object.values(notif.args.scores).forEach(player => {
+                    this.gamedatas.players[player.id].rounds_before_points = player.rounds_before_points;
+                    this.gamedatas.players[player.id].rounds_won = player.rounds_won;
+                });
+                this.initializePlayerPanels();
+
+                // Reset Player Stocks
+                Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                    hand.removeAll();
+                    court.removeAll();
+                });
+
+                //remove Assassins
+                Object.keys(this.gamedatas.assassins).forEach(key => {
+                    dojo.destroy(`assassin_${key}`);
+                });
+                this.gamedatas.assassins = {};
+
+            });
+            this.notifqueue.setSynchronous('newRound', 1000);
+
             dojo.subscribe('score', this, "notif_score");
             
         },  

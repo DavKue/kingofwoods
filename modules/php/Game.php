@@ -999,6 +999,16 @@ class Game extends \Table
                 "cards" => array_values($hiddenCards),
             ]);
         }
+
+
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'currentRound'"
+        );
+        $currentRound = json_decode($data['currentRound']['value'], true);
+        $this->notify->all("logText", clienttranslate('Round ${round} has started'), [
+            "round" => $currentRound,
+        ]);
+
         $this->gamestate->nextState("nextPlayer");
     } 
 
@@ -1102,40 +1112,40 @@ class Game extends \Table
         $winnerByPoints = false;
         $winnersRound = [];
         $mostWins = 0;
-        $allBeforeScores = $this->getCollectionFromDB( "SELECT player_id id, player_score score, player_score_aux tiebreaker,rounds_before_points points, rounds_won rounds_won FROM player" );
+        $allBeforeScores = $this->getCollectionFromDB( "SELECT player_id id, player_score score, player_score_aux tiebreaker,rounds_before_points rounds_before_points, rounds_won rounds_won FROM player" );
 
-        foreach($players as $player_id => $value) {
-            $currentScore = $allBeforeScores[$player_id]['score'];
+        foreach($players as $thisPlayerId => $value) {
+            $currentScore = (int) $allBeforeScores[$thisPlayerId]['score'];
 
             //Find Round Winners
             if ($scoreHighest < $currentScore) {
-                $currentScore = $scoreHighest;
+                $scoreHighest = $currentScore;
                 $winnersRound = [];
-                $winnersRound[] = $player_id;
+                $winnersRound[] = $thisPlayerId;
             }
             if ($scoreHighest === $currentScore) {
-                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] < $allBeforeScores[$player_id]['tiebreaker']) {
+                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] < $allBeforeScores[$thisPlayerId]['tiebreaker']) {
                     $winnersRound = [];
-                    $winnersRound[] = $player_id;
+                    $winnersRound[] = $thisPlayerId;
                 }
-                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] = $allBeforeScores[$player_id]['tiebreaker']) {
-                    $winnersRound[] = $player_id;
+                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] = $allBeforeScores[$thisPlayerId]['tiebreaker']) {
+                    $winnersRound[] = $thisPlayerId;
                 }
             }
 
             //Manage Points
-            $scoresTotal[$player_id] = $currentScore;
-            $PointBefore = $allBeforeScores[$player_id]['points'];
-            $pointsTotal = $currentScore + $PointBefore;
+            $scoresTotal[$thisPlayerId] = (int) $currentScore;
+            $pointsBefore = (int) $allBeforeScores[$thisPlayerId]['rounds_before_points'];
+            $pointsTotal = $currentScore + $pointsBefore;
             if ($pointsTotal > 41) {
                 $winnerByPoints = true;
             }
-            $scoresTotal[$player_id] = $pointsTotal;
-            $this->DbQuery( "UPDATE player SET rounds_before_points=$pointsTotal WHERE player_id='$player_id'" );
+            $scoresTotal[$thisPlayerId] = $pointsTotal;
+            $this->DbQuery( "UPDATE player SET rounds_before_points=$pointsTotal WHERE player_id='$thisPlayerId'" );
         }
 
         foreach ($winnersRound as $winnerID) {
-            $rounds_won = $allBeforeScores[$player_id]['tiebreaker'] + 1;
+            $rounds_won = $allBeforeScores[$thisPlayerId]['rounds_won'] + 1;
             $this->DbQuery( "UPDATE player SET rounds_won = $rounds_won WHERE player_id='$winnerID'" );
             if ($mostWins < $rounds_won) {
                 $mostWins = $rounds_won;
@@ -1150,8 +1160,8 @@ class Game extends \Table
         if ($roundsMode === 2) {
             //End game or restart round
             if ($winnerByPoints === true) {
-                foreach($players as $player_id => $value) {
-                    $this->DbQuery( "UPDATE player SET player_score=$scoresTotal[$player_id] WHERE player_id='$player_id'" );
+                foreach($players as $thisPlayerId => $value) {
+                    $this->DbQuery( "UPDATE player SET player_score=$scoresTotal[$thisPlayerId] WHERE player_id='$thisPlayerId'" );
                 }
                 
                 $this->gamestate->nextState("endGame");
@@ -1171,9 +1181,9 @@ class Game extends \Table
                 $allRoundsWon = $this->getCollectionFromDB( "SELECT rounds_won rounds_won FROM player" );
 
 
-                foreach($players as $player_id => $value) {
-                    $playerRoundsWon = $allRoundsWon[$player_id]['rounds_won'];
-                    $this->DbQuery( "UPDATE player SET player_score=$playerRoundsWon, player_score_aux=0 WHERE player_id='$player_id'" );
+                foreach($players as $thisPlayerId => $value) {
+                    $playerRoundsWon = $allRoundsWon[$thisPlayerId]['rounds_won'];
+                    $this->DbQuery( "UPDATE player SET player_score=$playerRoundsWon, player_score_aux=0 WHERE player_id='$thisPlayerId'" );
                 }
 
                 $this->gamestate->nextState("endGame");
@@ -1185,6 +1195,7 @@ class Game extends \Table
     }
 
     public function stResetRound(): void {
+        //Reset Scores
         $players = $this->loadPlayersBasicInfos();
         foreach($players as $player_id => $value) {
             $this->DbQuery( "UPDATE player SET player_score=0 WHERE player_id='$player_id'" );
@@ -1195,12 +1206,31 @@ class Game extends \Table
             ]);
         }
 
+        //Reset Cards
         $this->DbQuery("UPDATE cards SET card_location = 'aside', card_owner = 'noPlayerID', ontop_of = 0");
         $sql = "SELECT * FROM cards";
         $cards = $this->getCollectionFromDB($sql);
         $this->notify->all( 'cardMoved', '', [
             "cards" => array_values($cards),
         ]);
+
+        //Update Rounds
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'currentRound'"
+        );
+        $currentRound = json_decode($data['currentRound']['value'], true);
+
+        $allScores = $this->getCollectionFromDB( "SELECT player_id id, rounds_before_points rounds_before_points, rounds_won rounds_won FROM player" );
+        $this->notify->all("newRound", '', [
+            "currentRound" => $currentRound,
+            "scores" => $allScores,
+        ]);
+
+        $updatedRound = $currentRound +1;
+        $res = json_encode($updatedRound);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res' WHERE name = 'currentRound'"
+        );
 
         $this->gamestate->nextState("dealCards");
     }
@@ -1301,6 +1331,11 @@ class Game extends \Table
 
         $roundsMode = $this->tableOptions->get(100);
         $result['roundsMode'] = $roundsMode;
+
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'currentRound'"
+        );
+        $result['currentRound'] = json_decode($data['currentRound']['value'], true);
 
         return $result;
     }
