@@ -984,22 +984,22 @@ class Game extends \Table
         
         $players = $this->loadPlayersBasicInfos();
         $playerCount = count($players);
+        $easyMode = $this->tableOptions->get(101);
         
         // Determine card distribution based on player count
         if ($playerCount == 2) {
             $cardsPerPlayer = 8;
-            $asideCards = 4;
         } else { // 3 or 4 players
             $cardsPerPlayer = 7;
-            $asideCards = 3;
         }
+        if ($easyMode == 2) {
+            $cardsPerPlayer = $cardsPerPlayer -1;
+        }
+        $asideCards = count($cards) - ($cardsPerPlayer*$playerCount);
 
         // Split cards into player cards and aside cards
         $playerCards = array_slice($cards, 0, $cardsPerPlayer * $playerCount);
         $asideCards = array_slice($cards, $cardsPerPlayer * $playerCount, $asideCards);
-
-        // Prepare SQL updates
-        $sqlUpdates = [];
 
         // Distribute player cards
         $playerIndex = 0;
@@ -1450,67 +1450,46 @@ class Game extends \Table
         //Setup Cards
 
 
-        $randomArray = array();
-        while (count($randomArray) < 31) {
-            $num = bga_rand(1, 1000);
-            if (!in_array($num, $randomArray)) {
-                $randomArray[] = $num;
+        $amountOfPlayers = count($players);
+        $easyMode = $this->tableOptions->get(101);
+
+        //Create Cards List
+        $allCards = [];
+        foreach($this->cards as $name => $card) {
+            $amountCard = $card['amount2Players'];
+            if ($amountOfPlayers == 3) {
+                $amountCard = $card['amount3Players'];
+            }
+            if ($amountOfPlayers == 4) {
+                $amountCard = $card['amount4Players'];
+            }
+            if ($easyMode == 2 && $card['beginner'] == false) {
+                $amountCard = 0;
+            }
+            $index = 0;
+            while ($index < $amountCard) {
+                $allCards[] = $name;
+                $index = $index +1;
             }
         }
+        shuffle($allCards);
 
-        $cards2Players =  [
-            "($randomArray[0], 'Assassin', 'hand', 'noPlayerID', 0)",
-            "($randomArray[1], 'Assassin', 'hand', 'noPlayerID', 0)",
-            "($randomArray[2], 'Assassin', 'hand', 'noPlayerID', 0)",
-            "($randomArray[3], 'Trader', 'hand', 'noPlayerID', 0)",
-            "($randomArray[4], 'Trader', 'hand', 'noPlayerID', 0)",
-            "($randomArray[5], 'Squire', 'hand', 'noPlayerID', 0)",
-            "($randomArray[6], 'Squire', 'hand', 'noPlayerID', 0)",
-            "($randomArray[7], 'Guard', 'hand', 'noPlayerID', 0)",
-            "($randomArray[8], 'Scholar', 'hand', 'noPlayerID', 0)",
-            "($randomArray[9], 'Priest', 'hand', 'noPlayerID', 0)",
-            "($randomArray[10], 'Jester', 'hand', 'noPlayerID', 0)",
-            "($randomArray[11], 'Jester', 'hand', 'noPlayerID', 0)",
-            "($randomArray[12], 'Jester', 'hand', 'noPlayerID', 0)",
-            "($randomArray[13], 'Treasurer', 'hand', 'noPlayerID', 0)",
-            "($randomArray[14], 'Treasurer', 'hand', 'noPlayerID', 0)",
-            "($randomArray[15], 'Knight', 'hand', 'noPlayerID', 0)",
-            "($randomArray[16], 'Knight', 'hand', 'noPlayerID', 0)",
-            "($randomArray[17], 'General', 'hand', 'noPlayerID', 0)",
-            "($randomArray[18], 'General', 'hand', 'noPlayerID', 0)",
-            "($randomArray[19], 'Princess', 'hand', 'noPlayerID', 0)"
-        ];
-
-        $cards3Players =  [
-            "($randomArray[20], 'Trader', 'hand', 'noPlayerID', 0)",
-            "($randomArray[21], 'Squire', 'hand', 'noPlayerID', 0)",
-            "($randomArray[22], 'Scholar', 'hand', 'noPlayerID', 0)",
-            "($randomArray[23], 'Priest', 'hand', 'noPlayerID', 0)",
-        ];
-
-        $cards4Players =  [
-            "($randomArray[24], 'Assassin', 'hand', 'noPlayerID', 0)",
-            "($randomArray[25], 'Guard', 'hand', 'noPlayerID', 0)",
-            "($randomArray[26], 'Scholar', 'hand', 'noPlayerID', 0)",
-            "($randomArray[27], 'Jester', 'hand', 'noPlayerID', 0)",
-            "($randomArray[28], 'Treasurer', 'hand', 'noPlayerID', 0)",
-            "($randomArray[29], 'Knight', 'hand', 'noPlayerID', 0)",
-            "($randomArray[30], 'General', 'hand', 'noPlayerID', 0)",
-        ];
-        
-        $amountOfPlayers = count($players);
-        if ($amountOfPlayers == 2) {
-        $insertValues = $cards2Players;
-        } else if ($amountOfPlayers == 3) {
-            $insertValues = array_merge($cards2Players, $cards3Players);
-        } else {
-            $insertValues = array_merge($cards2Players, $cards3Players, $cards4Players);
+        //Create Cards in Database
+        $randomArray = array();
+        foreach($allCards as $cardname) {
+            $numFound = false;
+            $num = 0;
+            while ($numFound === false) {
+                $num = bga_rand(1, 1000);
+                if (!in_array($num, $randomArray)) {
+                    $randomArray[] = $num;
+                    $numFound = true;
+                }
+            }
+            $numString = "" . $num;
+            $this->DbQuery("INSERT INTO cards (card_id, card_type, card_location, card_owner, ontop_of) 
+                VALUES ('$numString', '$cardname', 'hand', 'noPlayerID', 0)");
         }
-
-        $sql =
-            'INSERT INTO cards (card_id, card_type, card_location, card_owner, ontop_of) VALUES ' .
-            implode(',', $insertValues);
-        $this->DbQuery($sql);
 
         // Activate first player once everything has been initialized and ready.
         $this->activeNextPlayer();
