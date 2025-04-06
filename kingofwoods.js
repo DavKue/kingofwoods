@@ -1043,6 +1043,48 @@ function (dojo, declare) {
             this.statusBar.removeActionButtons()
         },
 
+        showRoundPopup: function(currentRound) {
+            // Remove existing popup
+            const existingPopup = $('roundPopup');
+            if (existingPopup) existingPopup.parentNode.removeChild(existingPopup);
+        
+            // Create popup content
+            const popupDiv = document.createElement('div');
+            popupDiv.id = 'roundPopup';
+            popupDiv.className = 'round-popup';
+            
+            // Get status message based on game mode
+            let statusMessage = '';
+            switch(this.gamedatas.roundsMode) {
+                case 2:
+                    statusMessage = _("No player has reached 42 points yet.");
+                    break;
+                case 3:
+                    statusMessage = _("No player has won 2 rounds yet.");
+                    break;
+                case 4:
+                    statusMessage = _("No player has won 3 rounds yet.");
+                    break;
+            }
+        
+            popupDiv.innerHTML = `
+                <h2>${_("Round")} ${currentRound} ${_("finished")}</h2>
+                ${statusMessage ? `<p>${statusMessage}</p>` : ''}
+                <p>${_("Starting next round...")}</p>
+            `;
+        
+            // Add to game area
+            document.getElementById('game_play_area').appendChild(popupDiv);
+        
+            // Auto-remove after 2 seconds
+            setTimeout(() => {
+                popupDiv.style.animation = 'fadeOut 0.5s ease-out';
+                setTimeout(() => {
+                    popupDiv.parentNode.removeChild(popupDiv);
+                }, 500);
+            }, 2000);
+        },
+
         // Update stock selection mode dynamically:
         onEnteringState: function(stateName, args) {
             switch(stateName) {
@@ -1414,8 +1456,9 @@ function (dojo, declare) {
                 });
                 this.gamedatas.assassins = {};
 
+                this.showRoundPopup(notif.args.currentRound);
             });
-            this.notifqueue.setSynchronous('newRound', 1000);
+            this.notifqueue.setSynchronous('newRound', 3000);
 
             dojo.subscribe('score', this, "notif_score");
             

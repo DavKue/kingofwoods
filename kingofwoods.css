@@ -212,5 +212,39 @@
     font-display: swap;
 }
 
+.round-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    text-align: center;
+    z-index: 1000;
+    animation: fadeIn 0.5s ease-out;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
 
+.round-popup h2 {
+    margin: 0 0 1rem 0;
+    font-size: 2rem;
+    color: #ffd700;
+}
+
+.round-popup p {
+    margin: 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -40%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
 
