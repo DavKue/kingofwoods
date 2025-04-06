@@ -82,7 +82,7 @@
 .stockitem {
     border-radius: 8px !important;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    border: 2px solid rgb(255, 255, 255) ! important;
+    border: 2px solid rgb(252, 223, 58) ! important;
 }
 
 .stockitem_selected {
@@ -164,7 +164,7 @@
 }
 
 
-/* Card preview in tooltip */
+/* Card preview in tooltip - not in use currently*/
 .tooltip-card {
     position: relative;
     margin-bottom: 10px;
