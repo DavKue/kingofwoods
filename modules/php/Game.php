@@ -1362,6 +1362,17 @@ class Game extends \Table
                 $cardsInPlay[] = [$name => $amountCard];
             }
         }
+        // Determine card distribution based on player count
+        if ($amountOfPlayers == 2) {
+            $cardsPerPlayer = 8;
+        } else { // 3 or 4 players
+            $cardsPerPlayer = 7;
+        }
+        if ($easyMode == 2) {
+            $cardsPerPlayer = $cardsPerPlayer -1;
+        }
+        $asideCards = count($allCards) - ($cardsPerPlayer*$amountOfPlayers);
+        $cardsInPlay[] = ['aside' => $asideCards];
         $result['cardsInPlay'] = $cardsInPlay;
 
         $hiddenCards = $allCards;

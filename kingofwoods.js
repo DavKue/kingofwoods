@@ -243,25 +243,42 @@ function (dojo, declare) {
         updateGlobalCardCounts: function() {
             const cardInformation = this.cardInformation();
             // Generate HTML
+            amountAside = 0;
             const content = this.gamedatas.cardsInPlay.map((card) => {
                 const [type, count] = Object.entries(card)[0];
+                if (type != 'aside') {
                 const name = cardInformation[type].name;
                 return `
-                    <div class="card-type-row">
-                        <span class="card-type-count">${count}x</span>
-                        <span class="card-type-name">${name}</span>
+                    <div>
+                        <span>${count}x</span>
+                        <span>${name}</span>
                     </div>
                 `;
+                } else {
+                    amountAside = count;
+                }
             }).join('');
         
             const playerBoardsContainer = $('player_boards');
             if (playerBoardsContainer) {
                 const infoPanel = document.createElement('div');
                 infoPanel.className = 'player-board roundedbox kotw-global-info';
-                infoPanel.innerHTML = content;
                 
-            // Insert at the top of player boards
-            playerBoardsContainer.insertBefore(infoPanel, playerBoardsContainer.firstChild);
+                // Add header and content container
+                infoPanel.innerHTML = `
+                    <div class="playerpaneltext">
+                        <div>${_("Cards in this set:")}</div>
+                        <div>${content}</div>
+                        <div>${_("Cards put aside:")} ${amountAside}</div>
+                    </div>
+                `;
+                
+                // First remove existing panel if it exists
+                const existingPanel = playerBoardsContainer.querySelector('.kotw-global-info');
+                if (existingPanel) existingPanel.remove();
+                
+                // Insert at the top of player boards
+                playerBoardsContainer.insertBefore(infoPanel, playerBoardsContainer.firstChild);
             }
         },
 
