@@ -1096,7 +1096,6 @@ class Game extends \Table
     public function stFinishRound(): void {
         $roundsMode = $this->tableOptions->get(100);
 
-        $scoresRound = [];
         $scoresTotal = [];
         $scoreHighest = 0;
         $players = $this->loadPlayersBasicInfos();
@@ -1107,7 +1106,6 @@ class Game extends \Table
 
         foreach($players as $player_id => $value) {
             $currentScore = $allBeforeScores[$player_id]['score'];
-            $scoresRound[$player_id] = $currentScore;
 
             //Find Round Winners
             if ($scoreHighest < $currentScore) {
@@ -1255,7 +1253,7 @@ class Game extends \Table
         // Get information about players.
         // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
         $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score` FROM `player`"
+            "SELECT `player_id` `id`, `player_score` `score`, `rounds_before_points` `rounds_before_points`, `rounds_won` `rounds_won` FROM `player`"
         );
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
@@ -1300,6 +1298,9 @@ class Game extends \Table
             }
         }
         $result['cards'] = array_values($hiddenCards);
+
+        $roundsMode = $this->tableOptions->get(100);
+        $result['roundsMode'] = $roundsMode;
 
         return $result;
     }

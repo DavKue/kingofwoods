@@ -123,6 +123,9 @@ function (dojo, declare) {
 
             this.gamedatas.assassins = this.gamedatas.assassins || {};
 
+            //Setup Player Panels for Round-Scores
+            this.initializePlayerPanels();
+
             console.log( "Ending game setup" );
         },
        
@@ -211,6 +214,28 @@ function (dojo, declare) {
             script.
         
         */
+
+
+        initializePlayerPanels: function () {
+            Object.values(this.gamedatas.players).forEach(player => {
+                const infoDiv = this.getPlayerPanelElement(player.id);
+                if (!infoDiv) return;
+        
+                switch(this.gamedatas.roundsMode) {
+                    case 2:
+                        infoDiv.innerHTML = _("Points from prior rounds: ${points}/42").replace('${points}', player.rounds_before_points);
+                        break;
+                    case 3:
+                        infoDiv.innerHTML = _("Rounds won: ${won}/2").replace('${won}', player.rounds_won);
+                        break;
+                    case 4:
+                        infoDiv.innerHTML = _("Rounds won: ${won}/3").replace('${won}', player.rounds_won);
+                        break;
+                    default:
+                        infoDiv.innerHTML = '';
+                }
+            });
+        },
 
         initializePlayerStocks: function(players) {
             const playerTables = document.getElementById('player-tables');
