@@ -668,6 +668,11 @@ class Game extends \Table
         $sql = "SELECT * FROM cards WHERE card_owner = $player_id";
         $cards = $this->getCollectionFromDB($sql);
 
+        $data3 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'blockedCard'"
+        );
+        $blockedCard = json_decode($data3['blockedCard']['value'], true);
+
         // check input values (and find card name)
         $card_name = 'unknown';
         $validCard = false;
@@ -677,9 +682,33 @@ class Game extends \Table
                 $validCard = true;
             }
         }
-
         if ($validCard == false) {
             throw new \BgaUserException('Invalid card choice');
+        }
+
+        $targetInfluence = $this->cards[$card_name]['influence'];
+
+        //Check if target player would have a valid card to give back
+        $sql = "SELECT * FROM cards WHERE card_owner = $targetPlayer AND card_location = 'court'";
+        $targetCards = $this->getCollectionFromDB($sql);
+        $coveredCards = [];
+        foreach ($cards as $card) {
+            if ($card['ontop_of'] != 0) {
+                $coveredCards[] = $card['ontop_of'];
+            }
+        }
+        $this->dump('### Target Cards ###', $targetCards);
+        $this->dump('### Target Influence ###', $targetInfluence);
+        $validCardtoGetBack = false;
+        foreach ($targetCards as $card) {
+            $cardInfluence = $this->cards[$card['card_type']]['influence'];
+            $this->dump('### Card Influence ###', $cardInfluence);
+            if ($cardInfluence < $targetInfluence && !in_array($card['card_id'], $coveredCards) && $card['card_type'] != 'Assassin' && $card['card_type'] != 'Jester' && $card['card_id'] != $blockedCard) {
+                $validCardtoGetBack = true;
+            }
+        }
+        if ($validCardtoGetBack == false) {
+            throw new \BgaUserException('Target court has no card with lover influence to give back');
         }
 
         $this->DbQuery("UPDATE cards SET card_owner = $targetPlayer, card_location = 'court', ontop_of = 0 WHERE card_id = '$card_id'");
@@ -704,8 +733,6 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
-
-        $targetInfluence = $this->cards[$card_name]['influence'];
 
         $sql2 = "SELECT * FROM cards WHERE card_owner = $targetPlayer";
         $targetPlayerCards = $this->getCollectionFromDB($sql2);
@@ -771,6 +798,11 @@ class Game extends \Table
         );
         $targetPlayer = json_decode($data2['targetPlayer']['value'], true);
             
+        $data3 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'blockedCard'"
+        );
+        $blockedCard = json_decode($data3['blockedCard']['value'], true);
+
         $sql = "SELECT * FROM cards WHERE card_owner = $targetPlayer";
         $cards = $this->getCollectionFromDB($sql);
 
@@ -785,7 +817,7 @@ class Game extends \Table
         $card_name = 'unknown';
         $validCard = false;
         foreach ($cards as $card) {
-            if ($card['card_id'] == $card_id && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards)) {
+            if ($card['card_id'] == $card_id && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards) && $card['card_id'] != $blockedCard) {
                 $card_name = $card['card_type'];
                 $validCard = true;
             }

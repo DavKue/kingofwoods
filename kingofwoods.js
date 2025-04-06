@@ -1262,6 +1262,17 @@ function (dojo, declare) {
                     .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
                     .map(squire => squire.card_id.toString());
     
+                    const cardInformation = this.cardInformation();
+                    lowestInfluence = 10;
+                    this.gamedatas.cards.forEach(item => {
+                        if (item.card_location == 'court' && item.card_owner == this.gamedatas.targetPlayer) {
+                            const cardInfluence = cardInformation[item.card_type].influence;
+                            if (cardInfluence < lowestInfluence && item.card_type != 'Assassin' && item.card_type != 'Jester' && item.card_id != this.gamedatas.blockedCard) {
+                                lowestInfluence = cardInfluence;
+                            }
+                        }
+                    });
+
                     // Enable selection only in current player's hand
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
@@ -1273,25 +1284,21 @@ function (dojo, declare) {
                         const squireIds = hand.items
                         .filter(item => this.getCardType(item.id) === 'Squire')
                         .map(squire => squire.id.toString());
-                        if (playedSquireIds.length > 0 && squireIds.length > 0) {
-                            // Add CSS classes to non-Squires
+
+                        if (isCurrentPlayer && isActive) {
                             hand.items.forEach(item => {
+                                const itemType = this.getCardType(item.id);
+                                const itemInfluence = cardInformation[itemType].influence;
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                if (!squireIds.includes(item.id.toString())) {
+                                if (
+                                    (playedSquireIds.length > 0 && squireIds.length > 0 && !squireIds.includes(item.id.toString())) ||
+                                    (court.items.length < 3 && this.getCardType(item.id) === 'Princess') ||
+                                    (itemInfluence <= lowestInfluence)
+                                    ) {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
                                 }
                             });
                         }
-    
-                        if (court.items.length < 3) {
-                            hand.items.forEach(item => {
-                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                if (this.getCardType(item.id) === 'Princess') {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                }
-                            });
-                        }
-    
                     });
 
                     const isActive = this.isCurrentPlayerActive();
