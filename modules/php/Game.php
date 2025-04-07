@@ -89,6 +89,7 @@ class Game extends \Table
         $cards = $this->getCollectionFromDB($sql);
 
         $card_name = 'unknown';
+        $covered_card_name = 'unknown';
         $ownedCard = false;
         $squireInCourt = false;
         $squireInHand = false;
@@ -112,8 +113,11 @@ class Game extends \Table
                     $assassinsInCourt = $assassinsInCourt + 1;
                 }
             }
-            if ($card['card_owner'] == $target_player_id && $card['card_type'] == 'Guard') {
+            if ($card['card_owner'] == $target_player_id && $card['card_location'] == 'court' && $card['card_type'] == 'Guard') {
                 $guardInCourt = true;
+            }
+            if ($covered_card && $covered_card == $card['card_id']) {
+                $covered_card_name = $card['card_type'];
             }
         }
 
@@ -126,7 +130,7 @@ class Game extends \Table
         if ($card_name == 'Princess' && ($inCourtAll - ($assassinsInCourt*2)) < 3) {
             throw new \BgaUserException('You don´t have enough cards in that court to play the princess');
         }
-        if ($guardInCourt === true && $card_name != 'Guard') {
+        if ($card_name == 'Assassin' && $guardInCourt === true && $covered_card_name != 'Guard') {
             throw new \BgaUserException('You have to select a guard');
         }
 
