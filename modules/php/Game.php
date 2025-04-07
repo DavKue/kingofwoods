@@ -94,6 +94,7 @@ class Game extends \Table
         $squireInHand = false;
         $inCourtAll = 0;
         $assassinsInCourt = 0;
+        $guardInCourt = false;
         foreach ($cards as $card) {
             if ($card['card_id'] == $card_id && $card['card_owner'] == $player_id && $card['card_location'] == 'hand') {
                 $card_name = $card['card_type'];
@@ -111,6 +112,9 @@ class Game extends \Table
                     $assassinsInCourt = $assassinsInCourt + 1;
                 }
             }
+            if ($card['card_owner'] == $target_player_id && $card['card_type'] == 'Guard') {
+                $guardInCourt = true;
+            }
         }
 
         if ($ownedCard == false) {
@@ -119,8 +123,11 @@ class Game extends \Table
         if ($squireInCourt === true && $squireInHand === true && $card_name != 'Squire') {
             throw new \BgaUserException('You have to play a squire');
         }
-        if ($card_name == 'Princess' && ($inCourtAll - $assassinsInCourt) < 3) {
+        if ($card_name == 'Princess' && ($inCourtAll - ($assassinsInCourt*2)) < 3) {
             throw new \BgaUserException('You don´t have enough cards in that court to play the princess');
+        }
+        if ($guardInCourt === true && $card_name != 'Guard') {
+            throw new \BgaUserException('You have to select a guard');
         }
 
         //Play card

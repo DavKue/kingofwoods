@@ -1134,9 +1134,13 @@ function (dojo, declare) {
         onEnteringState: function(stateName, args) {
             switch(stateName) {
                 case 'playerTurn':
+                    //THIS IS -> Regular Card Selection
                     playedSquireIds = this.gamedatas.cards
                     .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
                     .map(squire => squire.card_id.toString());
+                    allCourtCards = this.gamedatas.cards
+                    .filter(item => item.card_location === 'court')
+                    .map(item => item.card_id.toString());
 
                     // Enable selection only in current player's hand
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
@@ -1163,7 +1167,8 @@ function (dojo, declare) {
                             hand.items.forEach(item => {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                 if ((playedSquireIds.length > 0 && squireIds.length > 0) && (!squireIds.includes(item.id.toString())) ||
-                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess')
+                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess') ||
+                                    (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin')
                                     ) {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
                                 }
@@ -1173,6 +1178,7 @@ function (dojo, declare) {
                     });
                     break;
                 case 'selectionKnight':
+                    //THIS IS -> Take Card from Targer Player Hand (Squire if possible)
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
                         const isActive = this.isCurrentPlayerActive();
@@ -1203,7 +1209,7 @@ function (dojo, declare) {
                     });
                     break;
                 case 'selectionTraderPlayer':
-                    // Enable selection only in current player's hand
+                    //THIS IS -> Give Target Player on Card from your Hand
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
                         const isActive = this.isCurrentPlayerActive();
@@ -1212,7 +1218,7 @@ function (dojo, declare) {
                     });
                     break;
                 case 'selectionTraderOpponent':
-                    // Enable selection only in current player's hand
+                    //THIS IS -> Target Player has to give card with higher influence back (or highest)
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
                         const isActive = this.isCurrentPlayerActive();
@@ -1258,7 +1264,7 @@ function (dojo, declare) {
                     });
                     break;
                 case 'selectionScholar':
-                    // Enable selection only in target player's court
+                    //THIS IS -> Take on Card from Target Court (4 or lower, if not possible any. Not Scholar or Assassin)
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
                         const isActive = this.isCurrentPlayerActive();
@@ -1305,9 +1311,13 @@ function (dojo, declare) {
                     });
                     break;       
                 case 'selectionPriestFirst':
+                    //THIS IS -> Nearly regular card selection. But Target player need to have card with lower value. Not Assassin or Jester
                     playedSquireIds = this.gamedatas.cards
                     .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
                     .map(squire => squire.card_id.toString());
+                    allCourtCards = this.gamedatas.cards
+                    .filter(item => item.card_location === 'court')
+                    .map(item => item.card_id.toString());
     
                     const cardInformation = this.cardInformation();
                     lowestInfluence = 10;
@@ -1349,6 +1359,7 @@ function (dojo, declare) {
                                 if (
                                     (playedSquireIds.length > 0 && squireIds.length > 0 && !squireIds.includes(item.id.toString())) ||
                                     (courtIds < 3 && this.getCardType(item.id) === 'Princess') ||
+                                    (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin') ||
                                     (itemInfluence <= lowestInfluence)
                                     ) {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
@@ -1368,7 +1379,7 @@ function (dojo, declare) {
 
                     break;
                 case 'selectionPriestSecond':
-                    // Enable selection only in target player's court
+                    //THIS IS -> But Target player needs to give back card with lower value. Not Assassin or Jester
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
                         const isActive = this.isCurrentPlayerActive();
