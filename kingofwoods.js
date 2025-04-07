@@ -278,7 +278,7 @@ function (dojo, declare) {
                 if (existingPanel) existingPanel.remove();
                 
                 // Insert at the top of player boards
-                playerBoardsContainer.insertBefore(infoPanel, playerBoardsContainer.firstChild);
+                playerBoardsContainer.appendChild(infoPanel, playerBoardsContainer.firstChild);
             }
         },
 
@@ -286,15 +286,17 @@ function (dojo, declare) {
             const playerTables = document.getElementById('player-tables');
             playerTables.innerHTML = '';
         
-            // Get the official player order from BGA framework
+            // Sort Players
             const playerOrder = this.gamedatas.playerorder;
-        
-            // Sort players according to official panel order
-            const orderedPlayers = playerOrder.map(playerId => 
-                Object.values(players).find(p => p.id == playerId)
-            );
+            const allPlayers = Object.values(players);
+            const orderedIdsSet = new Set(playerOrder.map(String));
+            const orderedPlayers = playerOrder
+                .map(playerId => allPlayers.find(p => p.id == playerId))
+                .filter(p => p); // filter out any undefined, in case of missing IDs
+            const missingPlayers = allPlayers.filter(p => !orderedIdsSet.has(p.id));
+            const finalPlayerOrder = [...orderedPlayers, ...missingPlayers];
 
-            Object.values(orderedPlayers).forEach(player => {
+            Object.values(finalPlayerOrder).forEach(player => {
                 // Create player area
                 const playerDiv = document.createElement('div');
                 playerDiv.className = 'player-area';
@@ -569,7 +571,9 @@ function (dojo, declare) {
                 }
                 // Find current stock
                 const fromStock = this.findCardStock(card.card_id);
+                console.log('Card Owner:', card.card_owner);
                 const targetPlayerId = card.card_owner;
+                console.log('Player Stocks:', this.playerStocks[targetPlayerId]);
                 const toStock = card.card_location == 'court' ? 
                     this.playerStocks[targetPlayerId].court : 
                     this.playerStocks[targetPlayerId].hand;
@@ -657,16 +661,18 @@ function (dojo, declare) {
             // Get all players (including self)
             const players = this.gamedatas.players;
 
-            // Get the official player order from BGA framework
+            // Sort Players
             const playerOrder = this.gamedatas.playerorder;
-        
-            // Sort players according to official panel order
-            const orderedPlayers = playerOrder.map(playerId => 
-                Object.values(players).find(p => p.id == playerId)
-            );
+            const allPlayers = Object.values(players);
+            const orderedIdsSet = new Set(playerOrder.map(String));
+            const orderedPlayers = playerOrder
+                .map(playerId => allPlayers.find(p => p.id == playerId))
+                .filter(p => p); // filter out any undefined, in case of missing IDs
+            const missingPlayers = allPlayers.filter(p => !orderedIdsSet.has(p.id));
+            const finalPlayerOrder = [...orderedPlayers, ...missingPlayers];
             
             // Add buttons for each player
-            Object.values(orderedPlayers).forEach(player => {
+            Object.values(finalPlayerOrder).forEach(player => {
                 this.statusBar.addActionButton(
                     _('Play to ${player_name}\'s court').replace('${player_name}', player.name),
                     () => this.confirmCardPlay(cardId, player.id),

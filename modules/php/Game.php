@@ -1356,6 +1356,7 @@ class Game extends \Table
 
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
 
+        // Determine card distribution
         $amountOfPlayers = $this->getPlayersNumber();
         $easyMode = $this->tableOptions->get(101);
         $cardsInPlay = [];
@@ -1373,7 +1374,6 @@ class Game extends \Table
                 $cardsInPlay[] = [$name => $amountCard];
             }
         }
-        // Determine card distribution based on player count
         if ($amountOfPlayers == 2) {
             $cardsPerPlayer = 8;
         } else { // 3 or 4 players
@@ -1386,6 +1386,7 @@ class Game extends \Table
         $cardsInPlay[] = ['aside' => $asideCards];
         $result['cardsInPlay'] = $cardsInPlay;
 
+        //prepere cards information
         $hiddenCards = $allCards;
         foreach ($allCards as $index => $card) {
             if ($gamestate['name'] == 'selectionKnight') {
