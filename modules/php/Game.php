@@ -977,7 +977,46 @@ class Game extends \Table
     {
         // TODO: compute and return the game progression
 
-        return 0;
+        // Hand-Cards at Start
+        $amountOfPlayers = $this->getPlayersNumber();
+        $easyMode = $this->tableOptions->get(101);
+        if ($amountOfPlayers == 2) {
+            $cardsPerPlayer = 8;
+        } else { // 3 or 4 players
+            $cardsPerPlayer = 7;
+        }
+        if ($easyMode == 2) {
+            $cardsPerPlayer = $cardsPerPlayer -1;
+        }
+        $cardAmountStarting = $cardsPerPlayer*$amountOfPlayers;
+
+        // Hand-Cards Now
+        $sql2 = "SELECT * FROM cards WHERE card_location = 'court'";
+        $handCards = $this->getCollectionFromDB($sql2);
+        $cardAmountCurrent = count($handCards);
+
+        //Current Round
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'currentRound'"
+        );
+        $currentRound = json_decode($data['currentRound']['value'], true);
+
+        //Needed Rounds
+        $roundMode = $this->tableOptions->get(100);
+        $roundsPlayed = 1;
+        if ($roundMode == 2 || $roundMode == 3) {
+            $roundsPlayed = 2;
+        }
+        if ($roundMode == 4) {
+            $roundsPlayed = 3;
+        }
+        if ($currentRound > $roundsPlayed) {
+            $roundsPlayed = $currentRound;
+        }
+
+        //Calculation
+        $gameProgression = (int) floor(100*(($roundsPlayed-($currentRound-1))*(($currentRound-1)/$currentRound) + ($cardAmountCurrent/$cardAmountStarting)*(1/$roundsPlayed)));
+        return $gameProgression;
     }
 
     /**
@@ -1185,7 +1224,7 @@ class Game extends \Table
         }
 
         foreach ($winnersRound as $winnerID) {
-            $rounds_won = $allBeforeScores[$thisPlayerId]['rounds_won'] + 1;
+            $rounds_won = $allBeforeScores[$winnerID]['rounds_won'] + 1;
             $this->DbQuery( "UPDATE player SET rounds_won = $rounds_won WHERE player_id='$winnerID'" );
             if ($mostWins < $rounds_won) {
                 $mostWins = $rounds_won;
@@ -1218,11 +1257,10 @@ class Game extends \Table
             }
 
             if ($mostWins === $targetRoundWins) {
-                $allRoundsWon = $this->getCollectionFromDB( "SELECT rounds_won rounds_won FROM player" );
+                $allRoundsWon = $this->getCollectionFromDB( "SELECT player_id id, rounds_won rounds_won FROM player" );
 
-
-                foreach($players as $thisPlayerId => $value) {
-                    $playerRoundsWon = $allRoundsWon[$thisPlayerId]['rounds_won'];
+                foreach($allRoundsWon as $thisPlayerId => $value) {
+                    $playerRoundsWon = $value['rounds_won'];
                     $this->DbQuery( "UPDATE player SET player_score=$playerRoundsWon, player_score_aux=0 WHERE player_id='$thisPlayerId'" );
                 }
 

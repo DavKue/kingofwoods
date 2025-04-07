@@ -167,7 +167,6 @@ $machinestates = [
         "description" => '',
         "type" => "game",
         "action" => "stActivatePlayer",
-        "updateGameProgression" => true,
         "transitions" => ["selectionTraderOpponent" => 14]
     ],
 
@@ -176,7 +175,6 @@ $machinestates = [
         "description" => '',
         "type" => "game",
         "action" => "stBackToPreviousPlayer",
-        "updateGameProgression" => true,
         "transitions" => ["nextPlayer" => 11]
     ],
 
@@ -185,7 +183,6 @@ $machinestates = [
         "description" => '',
         "type" => "game",
         "action" => "stFinishRound",
-        "updateGameProgression" => true,
         "transitions" => ["resetRound" => 60, "endGame" => 99]
     ],
 
@@ -194,7 +191,6 @@ $machinestates = [
         "description" => '',
         "type" => "game",
         "action" => "stResetRound",
-        "updateGameProgression" => true,
         "transitions" => ["dealCards" => 02]
     ],
 
