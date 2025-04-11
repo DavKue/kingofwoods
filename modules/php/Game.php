@@ -161,7 +161,6 @@ class Game extends \Table
                 ];
                 $this->notify->all("assassinKill", '', $assassinKill);
             }
-            
         }
 
         // Notify all players about the card played.
@@ -272,7 +271,7 @@ class Game extends \Table
                     "player_name" => $this->getPlayerNameById($player_id),
                     "target_player" => $this->getPlayerNameById($target_player_id),
                 ]);
-                $this->gamestate->nextState("playCard");
+                $this->gamestate->nextState("nextPlayer");
                 return;
             }
 
@@ -305,7 +304,7 @@ class Game extends \Table
             }
             if ($playerCard == false || $targetCard == false) {
                 $this->notify->all("logText", clienttranslate('Trader-Effect: Trade not possible'), ['']);
-                $this->gamestate->nextState("playCard");
+                $this->gamestate->nextState("nextPlayer");
                 return;
             }
 
@@ -366,7 +365,7 @@ class Game extends \Table
             $this->gamestate->nextState("playedPriest");
             return;
         }
-        $this->gamestate->nextState("playCard");
+        $this->gamestate->nextState("nextPlayer");
     }
 
     public function actSelectionKnight(int $card_id): void
@@ -444,7 +443,7 @@ class Game extends \Table
             "cards" => array_values($hiddenCards),
         ]);
 
-        $this->gamestate->nextState("playCard");
+        $this->gamestate->nextState("nextPlayer");
     }
 
     public function actSelectionTraderPlayer(int $card_id): void
@@ -663,7 +662,7 @@ class Game extends \Table
             ]);
         }
 
-        $this->gamestate->nextState("playCard");
+        $this->gamestate->nextState("nextPlayer");
     }
 
     public function actSelectionPriestFirst(int $card_id): void
@@ -778,7 +777,7 @@ class Game extends \Table
             );
             $this->notify->all('blockedCard', '', [0] );
 
-            $this->gamestate->nextState("pass");
+            $this->gamestate->nextState("nextPlayer");
             return;
         }
 
@@ -880,7 +879,7 @@ class Game extends \Table
         );
         $this->notify->all('blockedCard', '', [0] );
 
-        $this->gamestate->nextState("playCard");
+        $this->gamestate->nextState("nextPlayer");
     }
 
     public function actPassPriest (): void
@@ -897,7 +896,7 @@ class Game extends \Table
         );
         $this->notify->all('blockedCard', '', [0] );
 
-        $this->gamestate->nextState("pass");
+        $this->gamestate->nextState("nextPlayer");
     }
 
     public function updateScores (): void
@@ -1128,7 +1127,7 @@ class Game extends \Table
 
         // Go to another gamestate
         // Here, we would detect if the game is over, and in this case use "endGame" transition instead 
-        $this->gamestate->nextState("nextPlayer");
+        $this->gamestate->nextState("playerTurn");
     }
 
     public function stActivatePlayer(): void {
@@ -1311,6 +1310,104 @@ class Game extends \Table
         );
 
         $this->gamestate->nextState("dealCards");
+    }
+
+    public function stZombieTurn(): void {
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'activeZombie'"
+        );
+        $active_player = json_decode($data['activeZombie']['value'], true);
+
+        // check if card is a valid pick (and find card name)
+        $sql = "SELECT * FROM cards";
+        $cards = $this->getCollectionFromDB($sql);
+        
+        $inHandSquire = false;
+        $squireInCourt = false;
+        $cardsInCourt = 0;
+        $assassinsInCourt = 0;
+        $assassinTarget = false;
+        
+        foreach ($cards as $card) {
+            if ($card['card_type'] == 'Squire' && $card['card_owner'] == $active_player && $card['card_location'] == 'hand') {
+                $inHandSquire = true;
+            }
+            if ($card['card_type'] == 'Squire' && $card['card_location'] == 'court') {
+                $squireInCourt = true;
+            }
+            if ($card['card_owner'] == $active_player && $card['card_location'] == 'court' && $card['card_type'] != 'Assassin') {
+                $cardsInCourt = $cardsInCourt +1;
+                $assassinTarget = $card['card_id'];
+            }
+            if ($card['card_owner'] == $active_player && $card['card_location'] == 'court' && $card['card_type'] == 'Assassin') {
+                $assassinsInCourt = $assassinsInCourt +1;
+            }
+        }
+        
+        foreach ($cards as $card) {
+            $cardPlayable = false;
+            if ($card['card_owner'] == $active_player && $card['card_location'] == 'hand') {
+                $cardPlayable = true;
+                if ($card['card_type'] != 'Squire' && $squireInCourt === true && $inHandSquire === true) {
+                    $cardPlayable = false;
+                }
+                if ($card['card_type'] == 'Princess' && ($cardsInCourt - $assassinsInCourt) < 3){
+                    $cardPlayable = false;
+                }
+                if ($card['card_type'] == 'Assassin' && $assassinTarget === false){
+                    $cardPlayable = false;
+                }
+            }
+            if ($cardPlayable === true) {
+                $card_id = (int) $card['card_id'];
+                $card_name = $card['card_type'];
+                //Play card
+                if ($card['card_type'] != 'Assassin') {
+                    $this->DbQuery("UPDATE cards SET card_owner = $active_player, card_location = 'court' WHERE card_id = '$card_id'");
+                } else {
+                    //assassin-play
+                    $covered_card = (int) $assassinTarget;
+                    $sql2 = "SELECT * FROM cards WHERE card_owner = $active_player AND card_location = 'court'";
+                    $targetCards = $this->getCollectionFromDB($sql2);
+                    $alreadyCovered = false;
+                    $otherAssassinID = false;
+                    foreach ($targetCards as $card) {
+                        if ($card['ontop_of'] == $covered_card) {
+                            $alreadyCovered = true;
+                            $otherAssassinID = $card['card_id'];
+                        }
+                    }
+        
+                    if ($alreadyCovered === false) {
+                        $this->DbQuery("UPDATE cards SET card_owner = $active_player, card_location = 'court', ontop_of = $covered_card WHERE card_id = '$card_id'");
+                    } else {
+                        $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID', card_location = 'aside', ontop_of = 0 WHERE card_id = '$card_id'");
+                        $this->DbQuery("UPDATE cards SET card_owner = 'noPlayerID', card_location = 'aside', ontop_of = 0 WHERE card_id = '$otherAssassinID'");
+                        $assassinKill = [
+                            'killer' => $card_id,
+                            'victim' => $otherAssassinID,
+                        ];
+                        $this->notify->all("assassinKill", '', $assassinKill);
+                    }
+                }
+
+                // Notify all players about the card played.
+                $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$card_id'");
+
+                $this->notify->all("cardMoved", clienttranslate('${target_player} zombie-plays ${card_name} in own court'), [
+                    "cards" => array_values($cardNofif),
+                    "target_player" => $this->getPlayerNameById($active_player),
+                    "card_name" => $card_name,
+                    "card_id" => $card_id,
+                    "i18n" => ['card_name'],
+                ]);
+
+                break;
+            }
+        }
+
+
+        $this->gamestate->nextState("nextPlayer");
     }
 
     /**
@@ -1513,6 +1610,9 @@ class Game extends \Table
         // Create empty 'blockedCard'-Entry
         $sql = "INSERT INTO ingame (name, value) VALUES ('blockedCard', 0)";
         $this->DbQuery($sql);
+        // Create empty 'activeZombie'-Entry
+        $sql = "INSERT INTO ingame (name, value) VALUES ('activeZombie', 0)";
+        $this->DbQuery($sql);
 
         // Dummy content.
         $this->setGameStateInitialValue("my_first_global_variable", 0);
@@ -1600,9 +1700,19 @@ class Game extends \Table
 
         if ($state["type"] === "activeplayer") {
             switch ($state_name) {
+                case "playerTurn":
+                {
+                    $res = json_encode($active_player);
+                    $this->DbQuery(
+                        "UPDATE ingame SET value='$res' WHERE name = 'activeZombie'"
+                    );
+                    $this->gamestate->nextState("zombieTurn");
+                    break;
+                }
+
                 default:
                 {
-                    $this->gamestate->nextState("zombiePass");
+                    $this->gamestate->nextState("nextPlayer");
                     break;
                 }
             }

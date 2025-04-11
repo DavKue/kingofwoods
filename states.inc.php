@@ -70,7 +70,7 @@ $machinestates = [
         "type" => "game",
         "action" => "stDealCards",
         "updateGameProgression" => true,
-        "transitions" => ["nextPlayer" => 10]
+        "transitions" => ["nextPlayer" => 11]
     ],
 
 
@@ -83,7 +83,7 @@ $machinestates = [
             // these actions are called from the front with bgaPerformAction, and matched to the function on the game.php file
             "actPlayCard"
         ],
-        "transitions" => ["playCard" => 11, "playedKnight" => 12, "playedTrader" => 13, "playedScholar" => 15, "playedPriest" => 16]
+        "transitions" => ["nextPlayer" => 11, "playedKnight" => 12, "playedTrader" => 13, "playedScholar" => 15, "playedPriest" => 16, "zombieTurn" => 80]
     ],
 
     11 => [
@@ -92,7 +92,7 @@ $machinestates = [
         "type" => "game",
         "action" => "stNextPlayer",
         "updateGameProgression" => true,
-        "transitions" => ["nextPlayer" => 10, "finishRound" => 50]
+        "transitions" => ["playerTurn" => 10, "finishRound" => 50]
     ],
 
     12 => [
@@ -103,7 +103,7 @@ $machinestates = [
         "possibleactions" => [
             "actSelectionKnight"
         ],
-        "transitions" => ["playCard" => 11]
+        "transitions" => ["nextPlayer" => 11]
     ],
 
     13 => [
@@ -136,7 +136,7 @@ $machinestates = [
         "possibleactions" => [
             "actSelectionScholar"
         ],
-        "transitions" => ["playCard" => 11]
+        "transitions" => ["nextPlayer" => 11]
     ],
 
     16 => [
@@ -148,7 +148,7 @@ $machinestates = [
             "actSelectionPriestFirst",
             "actPassPriest"
         ],
-        "transitions" => ["selectionPriestSecond" => 17, "pass" => 11]
+        "transitions" => ["selectionPriestSecond" => 17, "nextPlayer" => 11]
     ],
 
     17 => [
@@ -159,7 +159,7 @@ $machinestates = [
         "possibleactions" => [
             "actSelectionPriestSecond"
         ],
-        "transitions" => ["playCard" => 11]
+        "transitions" => ["nextPlayer" => 11]
     ],
 
     20 => [
@@ -192,6 +192,14 @@ $machinestates = [
         "type" => "game",
         "action" => "stResetRound",
         "transitions" => ["dealCards" => 02]
+    ],
+
+    80 => [
+        "name" => "zombieTurn",
+        "description" => '',
+        "type" => "game",
+        "action" => "stZombieTurn",
+        "transitions" => ["nextPlayer" => 11]
     ],
 
     // Final state.
