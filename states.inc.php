@@ -125,7 +125,7 @@ $machinestates = [
         "possibleactions" => [
             "actSelectionTraderOpponent"
         ],
-        "transitions" => ["backToPreviousPlayer" => 21]
+        "transitions" => ["backToPreviousPlayer" => 21, "zombieTraderOpponent" => 81]
     ],
 
     15 => [
@@ -200,6 +200,14 @@ $machinestates = [
         "type" => "game",
         "action" => "stZombieTurn",
         "transitions" => ["nextPlayer" => 11]
+    ],
+
+    81 => [
+        "name" => "zombieTraderOpponent",
+        "description" => '',
+        "type" => "game",
+        "action" => "stZombieTraderOpponent",
+        "transitions" => ["backToPreviousPlayer" => 21]
     ],
 
     // Final state.

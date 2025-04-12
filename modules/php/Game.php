@@ -1410,6 +1410,73 @@ class Game extends \Table
         $this->gamestate->nextState("nextPlayer");
     }
 
+    public function stZombieTraderOpponent(): void {
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'activeZombie'"
+        );
+        $active_player = json_decode($data['activeZombie']['value'], true);
+
+        $data2 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetPlayer'"
+        );
+        $targetPlayer = json_decode($data2['targetPlayer']['value'], true);
+
+        $data3 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'targetInfluence'"
+        );
+        $targetInfluence = json_decode($data3['targetInfluence']['value'], true);
+            
+        $data4 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'blockedCard'"
+        );
+        $blockedCard = json_decode($data4['blockedCard']['value'], true);
+
+        $sql = "SELECT * FROM cards WHERE card_owner = $active_player AND card_location = 'hand'";
+        $cards = $this->getCollectionFromDB($sql);
+
+        // find card
+        $chosenCard = false;
+        $chosenInfluence = 10;
+        $highestCard = false;
+        $highestInfluence = 0;
+        foreach ($cards as $card) {
+            $thisInfluence = $this->cards[$card['card_type']]['influence'];
+            if ($blockedCard != $card['card_id'] && $thisInfluence > $highestInfluence) {
+                $highestInfluence = $thisInfluence;
+                $highestCard = $card['card_id'];
+            }
+            if ($blockedCard != $card['card_id'] && $thisInfluence < $chosenInfluence && $thisInfluence > $targetInfluence) {
+                $chosenInfluence = $thisInfluence;
+                $chosenCard = $card['card_id'];
+            }
+        }
+        if ($chosenCard === false) {
+            $chosenCard = $highestCard;
+        }
+
+        $this->DbQuery("UPDATE cards SET card_owner = $targetPlayer, card_location = 'hand', ontop_of = 0 WHERE card_id = '$chosenCard'");
+
+        //Moved card for all
+        $cardNofif = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_id = '$chosenCard'");
+        $players = $this->loadPlayersBasicInfos();
+        foreach ($players as $thisPlayer_id => $info) {
+            $hiddenCards = $cardNofif;
+            foreach ($cardNofif as $index => $card) {
+                if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
+            }
+            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Trader-Effect: ${player_name} gave a card to ${target_player}'), [
+                "cards" => array_values($hiddenCards),
+                "player_name" => $this->getPlayerNameById($active_player),
+                "target_player" => $this->getPlayerNameById($targetPlayer),
+                "i18n" => ['card_name'],
+            ]);
+        }
+
+        $this->gamestate->nextState("backToPreviousPlayer");
+    }
+
     /**
      * Migrate database.
      *
@@ -1707,6 +1774,16 @@ class Game extends \Table
                         "UPDATE ingame SET value='$res' WHERE name = 'activeZombie'"
                     );
                     $this->gamestate->nextState("zombieTurn");
+                    break;
+                }
+
+                case "selectionTraderOpponent":
+                {
+                    $res = json_encode($active_player);
+                    $this->DbQuery(
+                        "UPDATE ingame SET value='$res' WHERE name = 'activeZombie'"
+                    );
+                    $this->gamestate->nextState("zombieTraderOpponent");
                     break;
                 }
 
