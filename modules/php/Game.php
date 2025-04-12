@@ -1025,6 +1025,10 @@ class Game extends \Table
      */
 
     public function stDealCards(): void {
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'currentRound'"
+        );
+        $currentRound = json_decode($data['currentRound']['value'], true);
 
         // Get all in-game cards and shuffle them
         $sql = "SELECT * FROM cards";
@@ -1065,24 +1069,32 @@ class Game extends \Table
             $this->DbQuery("UPDATE cards SET card_location = 'aside', card_owner = 'noPlayerID', ontop_of = 0  WHERE card_id = '{$card['card_id']}'");
         }
 
+        //Notify Cards and Init Card-Stats
+        $nameStartRound = 'start_round' . $currentRound;
+        $nameEndRound = 'end_round' . $currentRound;
+        $this->initStat( 'player', $nameStartRound, 0);
+        $this->initStat( 'player', $nameEndRound, 0);
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
         foreach ($players as $playerId => $player) {
             $hiddenCards = $allCards;
+            $influence = 0;
             foreach ($allCards as $index => $card) {
+                $thisInfluence = $this->cards[$card['card_type']]['influence'];
                 if ($card['card_owner'] != $playerId && $card['card_location'] == 'hand'){
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
+                if ($card['card_owner'] == $playerId && $card['card_location'] == 'hand'){
+                    $influence = $influence + $thisInfluence;
+                }
             }
+
+            $this->setStat( $influence, $nameStartRound, $playerId);
+
             $this->notify->player($playerId, 'cardMoved', '', [
                 "cards" => array_values($hiddenCards),
             ]);
         }
 
-
-        $data = $this->getCollectionFromDb(
-            "SELECT * FROM ingame WHERE name = 'currentRound'"
-        );
-        $currentRound = json_decode($data['currentRound']['value'], true);
         $this->notify->all("logText", clienttranslate('Round ${round} has started'), [
             "round" => $currentRound,
         ]);
@@ -1228,6 +1240,20 @@ class Game extends \Table
             if ($mostWins < $rounds_won) {
                 $mostWins = $rounds_won;
             }
+        }
+
+        //set stats
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'currentRound'"
+        );
+        $currentRound = json_decode($data['currentRound']['value'], true);
+        $this->setStat( $currentRound, "rounds_played");
+        $nameEndRound = 'end_round' . $currentRound;
+        $roundsWonUpdated = $this->getCollectionFromDB( "SELECT player_id id, rounds_won rounds_won FROM player" );
+        foreach($players as $thisPlayerId => $value) {
+            $this->setStat( $roundsWonUpdated[$thisPlayerId]['rounds_won'], "rounds_won", $thisPlayerId);
+            $this->setStat( $scoresTotal[$thisPlayerId], "points_total", $thisPlayerId);
+            $this->setStat( $currentScore, $nameEndRound, $thisPlayerId);
         }
 
         //Handle Game Modes and Transitions
@@ -1688,16 +1714,12 @@ class Game extends \Table
         //
         // NOTE: statistics used in this file must be defined in your `stats.inc.php` file.
 
-        // Dummy content.
-        // $this->initStat("table", "table_teststat1", 0);
-        // $this->initStat("player", "player_teststat1", 0);
-
-        // TODO: Setup the initial game situation here.
+        $this->initStat("table", "rounds_played", 0);
+        $this->initStat("player", "rounds_won", 0);
+        $this->initStat("player", "points_total", 0);
 
 
         //Setup Cards
-
-
         $amountOfPlayers = count($players);
         $easyMode = $this->tableOptions->get(101);
 

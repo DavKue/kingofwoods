@@ -1,1 +1,111 @@
-{}
+{
+    "table": {
+      "rounds_played": {
+        "id": 10,
+        "name": "Rounds Played",
+        "type": "int"
+      }
+    },
+    "player": {
+      "rounds_won": {
+        "id": 10,
+        "name": "Rounds Won",
+        "type": "int"
+      },
+      "points_total": {
+        "id": 11,
+        "name": "Influence Total",
+        "type": "int"
+      },
+      "start_round1": {
+        "id": 20,
+        "name": "Influence starting hand round 1",
+        "type": "int"
+      },
+      "end_round1": {
+        "id": 21,
+        "name": "Influence end of round 1",
+        "type": "int"
+      },
+      "start_round2": {
+        "id": 22,
+        "name": "Influence starting hand round 2",
+        "type": "int"
+      },
+      "end_round2": {
+        "id": 23,
+        "name": "Influence end of round 2",
+        "type": "int"
+      },
+      "start_round3": {
+        "id": 24,
+        "name": "Influence starting hand round 3",
+        "type": "int"
+      },
+      "end_round3": {
+        "id": 25,
+        "name": "Influence end of round 3",
+        "type": "int"
+      },
+      "start_round4": {
+        "id": 26,
+        "name": "Influence starting hand round 4",
+        "type": "int"
+      },
+      "end_round4": {
+        "id": 27,
+        "name": "Influence end of round 4",
+        "type": "int"
+      },
+      "start_round5": {
+        "id": 28,
+        "name": "Influence starting hand round 5",
+        "type": "int"
+      },
+      "end_round5": {
+        "id": 29,
+        "name": "Influence end of round 5",
+        "type": "int"
+      },
+      "start_round6": {
+        "id": 30,
+        "name": "Influence starting hand round 6",
+        "type": "int"
+      },
+      "end_round6": {
+        "id": 31,
+        "name": "Influence end of round 6",
+        "type": "int"
+      },
+      "start_round7": {
+        "id": 32,
+        "name": "Influence starting hand round 7",
+        "type": "int"
+      },
+      "end_round7": {
+        "id": 33,
+        "name": "Influence end of round 7",
+        "type": "int"
+      },
+      "start_round8": {
+        "id": 34,
+        "name": "Influence starting hand round 8",
+        "type": "int"
+      },
+      "end_round8": {
+        "id": 35,
+        "name": "Influence end of round 8",
+        "type": "int"
+      },
+      "start_round9": {
+        "id": 36,
+        "name": "Influence starting hand round 9",
+        "type": "int"
+      },
+      "end_round9": {
+        "id": 37,
+        "name": "Influence end of round 9",
+        "type": "int"
+      }
+    }
+  }
