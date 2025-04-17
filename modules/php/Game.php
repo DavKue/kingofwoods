@@ -1231,9 +1231,6 @@ class Game extends \Table
                 $winnersRound[] = $thisPlayerId;
             }
 
-            $this->dump('### All Before Scores', $allBeforeScores);
-            $this->dump('### Winnders Round', $winnersRound);
-
             if ($scoreHighest === $currentScore && $winnersRound != []) {
                 if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] < $allBeforeScores[$thisPlayerId]['tiebreaker']) {
                     $winnersRound = [];
