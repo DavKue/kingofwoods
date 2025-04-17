@@ -1123,7 +1123,24 @@ class Game extends \Table
         while ($emptyHand === true) {
             $new_player_id = (int)$this->getActivePlayerId();
             foreach ($handCards as $card) {
-                if ($card['card_owner'] == $new_player_id) {
+                //Also skip if only unplayable Princess in Hand
+                $skip = false;
+                if ($card['card_type'] == 'Princess' && $card['card_owner'] == $new_player_id) {
+                    $sql3 = "SELECT * FROM cards WHERE card_location = 'court' AND card_owner = $new_player_id";
+                    $courtCards = $this->getCollectionFromDB($sql3);
+                    $countAssassins = 0;
+                    foreach ($courtCards as $card) {
+                        if ($card['card_type'] == 'Assassin') {
+                            $countAssassins = $countAssassins + 1;
+                        }
+                    }
+                    $courtAmount = count($courtCards) - ($countAssassins*2);
+                    if ($courtAmount < 3) {
+                        $skip = true;
+                    }
+                }
+
+                if ($card['card_owner'] == $new_player_id && $skip === false) {
                     $emptyHand = false;
                     break 2;
                 }
