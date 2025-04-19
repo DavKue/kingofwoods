@@ -96,12 +96,18 @@ class Game extends \Table
         $inCourtAll = 0;
         $assassinsInCourt = 0;
         $guardInCourt = false;
+        $coveredCards = [];
+        foreach ($cards as $card) {
+            if ($card['ontop_of'] != 0) {
+                $coveredCards[] = $card['ontop_of'];
+            }
+        }
         foreach ($cards as $card) {
             if ($card['card_id'] == $card_id && $card['card_owner'] == $player_id && $card['card_location'] == 'hand') {
                 $card_name = $card['card_type'];
                 $ownedCard = true;
             }
-            if ($card['card_type'] == 'Squire' && $card['card_location'] == 'court') {
+            if ($card['card_type'] == 'Squire' && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards)) {
                 $squireInCourt = true;
             }
             if ($card['card_type'] == 'Squire' && $card['card_owner'] == $player_id && $card['card_location'] == 'hand') {
@@ -113,7 +119,7 @@ class Game extends \Table
                     $assassinsInCourt = $assassinsInCourt + 1;
                 }
             }
-            if ($card['card_owner'] == $target_player_id && $card['card_location'] == 'court' && $card['card_type'] == 'Guard') {
+            if ($card['card_owner'] == $target_player_id && $card['card_location'] == 'court' && $card['card_type'] == 'Guard' && !in_array($card['card_id'], $coveredCards)) {
                 $guardInCourt = true;
             }
             if ($covered_card && $covered_card == $card['card_id']) {
@@ -916,6 +922,8 @@ class Game extends \Table
             $playerInfluence = 0;
             $jesterAmound = 0;
             $ownPrincess = false;
+            $princessID = 0;
+            $blockedCards = [];
             foreach ($cards as $card) {
                 if ($card['card_owner'] == $thisPlayer_id && $card['card_location'] == 'court' && !in_array($card['card_id'], $coveredCards)) {
                     $playerInfluence = $playerInfluence + $this->cards[$card['card_type']]['influence'];
@@ -924,13 +932,18 @@ class Game extends \Table
                     }
                     if ($card['card_type'] == 'Princess' ) {
                         $ownPrincess = true;
+                        $princessID = $card['card_id'];
+                    }
+                    if ($card['ontop_of'] != 0 ) {
+                        $blockedCards[] = $card['ontop_of'];
                     }
                 }
             }
+
             if ($jesterAmound === 3) {
                 $playerInfluence = 0;
             }
-            if ($ownPrincess === true) {
+            if ($ownPrincess === true && !in_array($princessID, $blockedCards)) {
                 $this->DbQuery( "UPDATE player SET player_score_aux=1 WHERE player_id='$thisPlayer_id'" );
             } else {
                 $this->DbQuery( "UPDATE player SET player_score_aux=0 WHERE player_id='$thisPlayer_id'" );
@@ -1267,6 +1280,18 @@ class Game extends \Table
         );
         $currentRound = json_decode($data['currentRound']['value'], true);
         $this->setStat( $currentRound, "rounds_played");
+
+        $names = array_map(
+            fn($id) => $this->getPlayerNameById($id),
+            $winnersRound
+        );
+        $winnersString = implode(', ', $names);
+        
+        $this->notify->all("logText", clienttranslate('Winner(s) round ${round}: ${winners}'), [
+            "round"   => $currentRound,
+            "winners" => $winnersString,
+        ]);
+
         $nameEndRound = 'end_round' . $currentRound;
         $roundsWonUpdated = $this->getCollectionFromDB( "SELECT player_id id, rounds_won rounds_won FROM player" );
 
@@ -1275,6 +1300,11 @@ class Game extends \Table
             $this->setStat( $scoresTotal[$thisPlayerId], "points_total", $thisPlayerId);
             $this->setStat( $allCurrentScores[$thisPlayerId], $nameEndRound, $thisPlayerId);
         }
+
+        $allScores = $this->getCollectionFromDB( "SELECT player_id id, rounds_before_points rounds_before_points, rounds_won rounds_won FROM player" );
+        $this->notify->all("playerscores", '', [
+            "scores" => $allScores,
+        ]);
 
         //Handle Game Modes and Transitions
         if ($roundsMode === 1) {
@@ -1343,10 +1373,8 @@ class Game extends \Table
         );
         $currentRound = json_decode($data['currentRound']['value'], true);
 
-        $allScores = $this->getCollectionFromDB( "SELECT player_id id, rounds_before_points rounds_before_points, rounds_won rounds_won FROM player" );
         $this->notify->all("newRound", '', [
-            "currentRound" => $currentRound,
-            "scores" => $allScores,
+            "currentRound" => $currentRound
         ]);
 
         $updatedRound = $currentRound +1;

@@ -1554,7 +1554,7 @@ function (dojo, declare) {
             });
             this.notifqueue.setSynchronous('blockedCard', 100);
 
-            dojo.subscribe('newRound', this, notif => {
+            dojo.subscribe('playerscores', this, notif => {
                 //Update Global Scores
                 this.gamedatas.currentRound = notif.args.currentRound + 1;
                 Object.values(notif.args.scores).forEach(player => {
@@ -1562,7 +1562,10 @@ function (dojo, declare) {
                     this.gamedatas.players[player.id].rounds_won = player.rounds_won;
                 });
                 this.updatePlayerPanels();
+            });
+            this.notifqueue.setSynchronous('playerscores', 100);
 
+            dojo.subscribe('newRound', this, notif => {
                 // Reset Player Stocks
                 Object.values(this.playerStocks).forEach(({ hand, court }) => {
                     hand.removeAll();
