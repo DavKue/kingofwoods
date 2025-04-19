@@ -1218,12 +1218,13 @@ class Game extends \Table
         $players = $this->loadPlayersBasicInfos();
         $winnerByPoints = false;
         $winnersRound = [];
+        $allCurrentScores = [];
         $mostWins = 0;
         $allBeforeScores = $this->getCollectionFromDB( "SELECT player_id id, player_score score, player_score_aux tiebreaker,rounds_before_points rounds_before_points, rounds_won rounds_won FROM player" );
 
         foreach($players as $thisPlayerId => $value) {
             $currentScore = (int) $allBeforeScores[$thisPlayerId]['score'];
-
+            $allCurrentScores[$thisPlayerId] = $currentScore;
             //Find Round Winners
             if ($scoreHighest < $currentScore) {
                 $scoreHighest = $currentScore;
@@ -1268,10 +1269,11 @@ class Game extends \Table
         $this->setStat( $currentRound, "rounds_played");
         $nameEndRound = 'end_round' . $currentRound;
         $roundsWonUpdated = $this->getCollectionFromDB( "SELECT player_id id, rounds_won rounds_won FROM player" );
+
         foreach($players as $thisPlayerId => $value) {
             $this->setStat( $roundsWonUpdated[$thisPlayerId]['rounds_won'], "rounds_won", $thisPlayerId);
             $this->setStat( $scoresTotal[$thisPlayerId], "points_total", $thisPlayerId);
-            $this->setStat( $currentScore, $nameEndRound, $thisPlayerId);
+            $this->setStat( $allCurrentScores[$thisPlayerId], $nameEndRound, $thisPlayerId);
         }
 
         //Handle Game Modes and Transitions
