@@ -1238,20 +1238,22 @@ class Game extends \Table
         foreach($players as $thisPlayerId => $value) {
             $currentScore = (int) $allBeforeScores[$thisPlayerId]['score'];
             $allCurrentScores[$thisPlayerId] = $currentScore;
+
             //Find Round Winners
             if ($scoreHighest < $currentScore) {
                 $scoreHighest = $currentScore;
                 $winnersRound = [];
                 $winnersRound[] = $thisPlayerId;
-            }
-
-            if ($scoreHighest === $currentScore && $winnersRound != []) {
-                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] < $allBeforeScores[$thisPlayerId]['tiebreaker']) {
-                    $winnersRound = [];
+            } else if ($scoreHighest === $currentScore) {
+                if ($winnersRound == []) {
                     $winnersRound[] = $thisPlayerId;
-                }
-                if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] = $allBeforeScores[$thisPlayerId]['tiebreaker']) {
-                    $winnersRound[] = $thisPlayerId;
+                } else {
+                    if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] < $allBeforeScores[$thisPlayerId]['tiebreaker']) {
+                        $winnersRound = [];
+                        $winnersRound[] = $thisPlayerId;
+                    } else if ($allBeforeScores[$winnersRound[0]]['tiebreaker'] == $allBeforeScores[$thisPlayerId]['tiebreaker']) {
+                        $winnersRound[] = $thisPlayerId;
+                    }
                 }
             }
 
