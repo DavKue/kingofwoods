@@ -446,16 +446,13 @@ function (dojo, declare) {
                 );
                 
                 if (cardType) {
-                    // const tooltipCard = this.createCardElement(cardType, 0.4, itemDiv.id);
-                    // const tooltipHTML = `
-                    //         ${tooltipCard.outerHTML}
-                    // `;
+                    textInfluence = _('Influence');
                     const tooltipHTML = `
                         <div class="card-tooltip">
                             <div class="tooltip-header">
                                 <strong>${cardInformation[cardType].name}</strong>
                             </div>
-                            <div class="tooltip-text">Influence: ${cardInformation[cardType].influence}</div>
+                            <div class="tooltip-text">${textInfluence}: ${cardInformation[cardType].influence}</div>
                             <div class="tooltip-text">${cardInformation[cardType].text}</div>
                         </div>
                     `;
