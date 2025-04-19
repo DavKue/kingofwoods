@@ -566,14 +566,16 @@ function (dojo, declare) {
             if (!Array.isArray(cards)) cards = [cards];
 
             cards.forEach(card => {
+                if (this.gamedatas.assassins && this.gamedatas.assassins[card.card_id]) {
+                    this.assassinRemove(card.card_id);
+                }
+
                 if (card.card_location == 'aside') {
                     return;
                 }
                 // Find current stock
                 const fromStock = this.findCardStock(card.card_id);
-                console.log('Card Owner:', card.card_owner);
                 const targetPlayerId = card.card_owner;
-                console.log('Player Stocks:', this.playerStocks[targetPlayerId]);
                 const toStock = card.card_location == 'court' ? 
                     this.playerStocks[targetPlayerId].court : 
                     this.playerStocks[targetPlayerId].hand;
@@ -718,6 +720,11 @@ function (dojo, declare) {
 
         //manage Assassin Cards ontop of other cards:
         assassinCreateElement: function(cardId, coveredCardId, targetPlayerId) {
+            // Prevent duplicate creation
+            if (this.gamedatas.assassins && this.gamedatas.assassins[cardId]) {
+                return this.gamedatas.assassins[cardId].div;
+            }
+
             const assassinTypeId = this.cardTypeMap['Assassin'];
             const assassinIndex = assassinTypeId - 1; // Get 0-based index
             
@@ -829,6 +836,12 @@ function (dojo, declare) {
     },
     assassinSyncPositions: function() {
         Object.entries(this.gamedatas.assassins || {}).forEach(([assassinId, assassin]) => {
+            // Validate DOM element existence
+            if (!document.contains(assassin.div)) {
+                delete this.gamedatas.assassins[assassinId];
+                return;
+            }
+
             if (assassin.coveredCardId) {
                 // Find current position of covered card
                 const coveredStock = this.findCardStock(assassin.coveredCardId);
@@ -840,6 +853,31 @@ function (dojo, declare) {
                 }
             }
         });
+    },
+
+    assassinsCleanOrphaned: function() {
+        const validIds = new Set(this.gamedatas.cards
+            .filter(c => c.card_type === 'Assassin')
+            .map(c => c.card_id.toString())
+        );
+        
+        Object.keys(this.gamedatas.assassins).forEach(assassinId => {
+            if (!validIds.has(assassinId)) {
+                this.assassinRemove(assassinId);
+            }
+        });
+    },
+
+    assassinRemove: function(cardId) {
+        const assassin = this.gamedatas.assassins[cardId];
+        if (assassin) {
+            // Immediate DOM removal
+            if (assassin.div && document.body.contains(assassin.div)) {
+                assassin.div.remove();
+            }
+            // Cleanup data
+            delete this.gamedatas.assassins[cardId];
+        }
     },
 
         ///////////////////////////////////////////////////
@@ -1469,6 +1507,8 @@ function (dojo, declare) {
             // 
 
             dojo.subscribe('cardMoved', this, notif => {
+                this.assassinsCleanOrphaned();
+
                 // Ensure we always get an array
                 const cards = Array.isArray(notif.args.cards) ? 
                     notif.args.cards : 
@@ -1483,7 +1523,6 @@ function (dojo, declare) {
                     });
 
                 this.gamedatas.cards = allCards;
-                console.log('Cards Notif:', cards);
                 this.updateCardDisplay(cards);
             });
             this.notifqueue.setSynchronous('cardMoved', 700);
