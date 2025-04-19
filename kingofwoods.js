@@ -660,6 +660,8 @@ function (dojo, declare) {
         showPlayerTargets: function(cardId) {
             this.statusBar.removeActionButtons()
             
+            const cardType = this.getCardType(cardId);
+
             // Get all players (including self)
             const players = this.gamedatas.players;
 
@@ -675,11 +677,20 @@ function (dojo, declare) {
             
             // Add buttons for each player
             Object.values(finalPlayerOrder).forEach(player => {
-                this.statusBar.addActionButton(
-                    _('Play to ${player_name}\'s court').replace('${player_name}', player.name),
-                    () => this.confirmCardPlay(cardId, player.id),
-                    { color: player.color }
-                );
+                cardsInCourt = true;
+                if (cardType == 'Assassin') {
+                    cardsInCourt = this.gamedatas.cards.some(card => 
+                        card.card_owner === player.id && 
+                        card.card_location === 'court'
+                    );
+                }
+                if (cardsInCourt === true) {
+                    this.statusBar.addActionButton(
+                        _('Play to ${player_name}\'s court').replace('${player_name}', player.name),
+                        () => this.confirmCardPlay(cardId, player.id),
+                        { color: player.color }
+                    );
+                }
             });
             
             // Add cancel button
