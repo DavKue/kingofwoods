@@ -1,7 +1,7 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * KingOfWoods implementation : © <Your name here> <Your email address here>
+ * KingOfWoods implementation : © <David Kühn> <david@schusterfilm.de>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -103,8 +103,6 @@ function (dojo, declare) {
             //         </div>
             //     `);
             // });
-            
-            // TODO: Set up your game interface here, according to "gamedatas"
             
             // Create main game containers
             document.getElementById('game_play_area').insertAdjacentHTML('beforeend', `
@@ -527,9 +525,7 @@ function (dojo, declare) {
                 
                 descDiv.className = 'card-description';
                 descDiv.innerHTML = cardInfo.text;
-                console.log('DIV ID', itemDivID);
                 const originalDesc = document.querySelector(`#${itemDivID} .card-description`);
-                console.log('originalDesc', document.querySelector(`#${itemDivID}`));
                 if (originalDesc && originalDesc.offsetParent !== null) { // Ensure element is visible
                     const originalSize = window.getComputedStyle(originalDesc).fontSize;
                     descDiv.style.fontSize = `calc(${originalSize} * ${scale / 0.20})`;
@@ -1502,8 +1498,6 @@ function (dojo, declare) {
         {
             console.log( 'notifications subscriptions setup' );
             
-            // TODO: here, associate your game notifications with local methods
-            
             // Example 1: standard notification handling
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             
@@ -1594,8 +1588,6 @@ function (dojo, declare) {
             
         },  
         
-        // TODO: from this point and below, you can write your game notifications handling methods
-        
         /*
         Example:
         
@@ -1605,8 +1597,6 @@ function (dojo, declare) {
             console.log( notif );
             
             // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-            
-            // TODO: play the card in the user interface.
         },    
         
         */
