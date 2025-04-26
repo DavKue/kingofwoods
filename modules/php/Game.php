@@ -216,7 +216,7 @@ class Game extends \Table
                             $hiddenCards[$index]['card_type'] = 'hidden';
                         }
                     }
-                    $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Treasurer-Effect: ${player_name} took a random card from the hand of ${target_player}'), [
+                    $this->notify->player($thisPlayer_id,"cardMoved", '', [
                         "cards" => array_values($hiddenCards),
                         "player_id" => $player_id,
                         "player_name" => $this->getActivePlayerName(),
@@ -225,6 +225,22 @@ class Game extends \Table
                         "i18n" => ['card_name'],
                     ]);
                 }
+
+                $hiddenCards = $cardNofif;
+                foreach ($cardNofif as $index => $card) {
+                    if ($card['card_location'] == 'hand') {
+                        $hiddenCards[$index]['card_type'] = 'hidden';
+                    }
+                }
+                $this->notify->all("cardMoved", clienttranslate('Treasurer-Effect: ${player_name} took a random card from the hand of ${target_player}'), [
+                    "cards" => array_values($hiddenCards),
+                    "player_id" => $player_id,
+                    "player_name" => $this->getActivePlayerName(),
+                    "target_player" => $this->getPlayerNameById($target_player_id),
+                    "card_id" => $randomCardId,
+                    "spectator" => true,
+                    "i18n" => ['card_name'],
+                ]);
             }
         }
 
@@ -251,7 +267,7 @@ class Game extends \Table
                         $hiddenCards[$index]['card_type'] = 'hidden';
                     }
                 }
-                $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('General-Effect: ${player_name} exchanged hand cards with ${target_player}'), [
+                $this->notify->player($thisPlayer_id,"cardMoved", '', [
                     "cards" => array_values($hiddenCards),
                     "player_id" => $player_id,
                     "player_name" => $this->getActivePlayerName(),
@@ -260,6 +276,20 @@ class Game extends \Table
                 ]);
             }
 
+            $hiddenCards = $cardNofif;
+            foreach ($cardNofif as $index => $card) {
+                if ($card['card_owner'] != $thisPlayer_id && $card['card_location'] == 'hand') {
+                    $hiddenCards[$index]['card_type'] = 'hidden';
+                }
+            }
+            $this->notify->all("cardMoved", clienttranslate('General-Effect: ${player_name} exchanged hand cards with ${target_player}'), [
+                "cards" => array_values($hiddenCards),
+                "player_id" => $player_id,
+                "player_name" => $this->getActivePlayerName(),
+                "target_player" => $this->getPlayerNameById($target_player_id),
+                "spectator" => true,
+                "i18n" => ['card_name'],
+            ]);
         }
 
         // at the end of the action, move to the next state
@@ -427,7 +457,7 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Knight-Effect: ${player_name} took a card from the hand of ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", '', [
                 "cards" => array_values($hiddenCards),
                 "player_id" => $player_id,
                 "player_name" => $this->getActivePlayerName(),
@@ -436,6 +466,22 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
+
+        $hiddenCards = $cardNofif;
+        foreach ($cardNofif as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all("cardMoved", clienttranslate('Knight-Effect: ${player_name} took a card from the hand of ${target_player}'), [
+            "cards" => array_values($hiddenCards),
+            "player_id" => $player_id,
+            "player_name" => $this->getActivePlayerName(),
+            "target_player" => $this->getPlayerNameById($targetPlayer),
+            "card_id" => $card_id,
+            "spectator" => true,
+            "i18n" => ['card_name'],
+        ]);
 
         //Hide Target Players hand
         $cardNofifActivePlayer = $this->getCollectionFromDB("SELECT * FROM cards WHERE card_owner = '$targetPlayer'");
@@ -491,7 +537,7 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Trader-Effect: ${player_name} gave a card to ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", '', [
                 "cards" => array_values($hiddenCards),
                 "player_id" => $player_id,
                 "player_name" => $this->getActivePlayerName(),
@@ -500,6 +546,22 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
+
+        $hiddenCards = $cardNofif;
+        foreach ($cardNofif as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all("cardMoved", clienttranslate('Trader-Effect: ${player_name} gave a card to ${target_player}'), [
+            "cards" => array_values($hiddenCards),
+            "player_id" => $player_id,
+            "player_name" => $this->getActivePlayerName(),
+            "target_player" => $this->getPlayerNameById($targetPlayer),
+            "card_id" => $card_id,
+            "spectator" => true,
+            "i18n" => ['card_name'],
+        ]);
 
         $res = json_encode($player_id);
         $this->DbQuery(
@@ -584,7 +646,7 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Trader-Effect: ${player_name} gave a card to ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", '', [
                 "cards" => array_values($hiddenCards),
                 "player_id" => $player_id,
                 "player_name" => $this->getActivePlayerName(),
@@ -593,6 +655,22 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
+
+        $hiddenCards = $cardNofif;
+        foreach ($cardNofif as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all( "cardMoved",clienttranslate('Trader-Effect: ${player_name} gave a card to ${target_player}'), [
+            "cards" => array_values($hiddenCards),
+            "player_id" => $player_id,
+            "player_name" => $this->getActivePlayerName(),
+            "target_player" => $this->getPlayerNameById($targetPlayer),
+            "card_id" => $card_id,
+            "spectator" => true,
+            "i18n" => ['card_name'],
+        ]);
 
         $this->gamestate->nextState("backToPreviousPlayer");
     } 
@@ -657,7 +735,7 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Scholar-Effect: ${player_name} took a ${card_name} from the court of ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", '', [
                 "cards" => array_values($hiddenCards),
                 "player_id" => $player_id,
                 "player_name" => $this->getActivePlayerName(),
@@ -667,6 +745,23 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
+
+        $hiddenCards = $cardNofif;
+        foreach ($cardNofif as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all("cardMoved", clienttranslate('Scholar-Effect: ${player_name} took a ${card_name} from the court of ${target_player}'), [
+            "cards" => array_values($hiddenCards),
+            "player_id" => $player_id,
+            "player_name" => $this->getActivePlayerName(),
+            "target_player" => $this->getPlayerNameById($targetPlayer),
+            "card_name" => $card_name,
+            "card_id" => $card_id,
+            "spectator" => true,
+            "i18n" => ['card_name'],
+        ]);
 
         $this->gamestate->nextState("nextPlayer");
     }
@@ -736,7 +831,7 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Priest-Effect: ${player_name} played a ${card_name} to the court of ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", '', [
                 "cards" => array_values($hiddenCards),
                 "player_id" => $player_id,
                 "player_name" => $this->getActivePlayerName(),
@@ -746,6 +841,23 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
+
+        $hiddenCards = $cardNofif;
+        foreach ($cardNofif as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all("cardMoved", clienttranslate('Priest-Effect: ${player_name} played a ${card_name} to the court of ${target_player}'), [
+            "cards" => array_values($hiddenCards),
+            "player_id" => $player_id,
+            "player_name" => $this->getActivePlayerName(),
+            "target_player" => $this->getPlayerNameById($targetPlayer),
+            "card_id" => $card_id,
+            "card_name" => $card_name,
+            "spectator" => true,
+            "i18n" => ['card_name'],
+        ]);
 
         $sql2 = "SELECT * FROM cards WHERE card_owner = $targetPlayer AND card_location = 'court'";
         $targetPlayerCards = $this->getCollectionFromDB($sql2);
@@ -856,7 +968,7 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Priest-Effect: ${player_name} took a ${card_name} from the court of ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", '', [
                 "cards" => array_values($hiddenCards),
                 "player_id" => $player_id,
                 "player_name" => $this->getActivePlayerName(),
@@ -866,6 +978,23 @@ class Game extends \Table
                 "i18n" => ['card_name'],
             ]);
         }
+
+        $hiddenCards = $cardNofif;
+        foreach ($cardNofif as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all("cardMoved", clienttranslate('Priest-Effect: ${player_name} took a ${card_name} from the court of ${target_player}'), [
+            "cards" => array_values($hiddenCards),
+            "player_id" => $player_id,
+            "player_name" => $this->getActivePlayerName(),
+            "target_player" => $this->getPlayerNameById($targetPlayer),
+            "card_id" => $card_id,
+            "card_name" => $card_name,
+            "spectator" => true,
+            "i18n" => ['card_name'],
+        ]);
 
         $res = json_encode('noPlayerID');
         $this->DbQuery(
@@ -1107,6 +1236,18 @@ class Game extends \Table
                 "cards" => array_values($hiddenCards),
             ]);
         }
+
+        $hiddenCards = $allCards;
+        foreach ($allCards as $index => $card) {
+            if ($card['card_location'] == 'hand'){
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all('cardMoved', '', [
+            "cards" => array_values($hiddenCards),
+            "spectator" => true,
+
+        ]);
 
         $this->notify->all("logText", clienttranslate('Round ${round} has started'), [
             "round" => $currentRound,
@@ -1542,13 +1683,25 @@ class Game extends \Table
                     $hiddenCards[$index]['card_type'] = 'hidden';
                 }
             }
-            $this->notify->player($thisPlayer_id,"cardMoved", clienttranslate('Trader-Effect: ${player_name} gave a card to ${target_player}'), [
+            $this->notify->player($thisPlayer_id,"cardMoved", '', [
                 "cards" => array_values($hiddenCards),
                 "player_name" => $this->getPlayerNameById($active_player),
                 "target_player" => $this->getPlayerNameById($targetPlayer),
-                "i18n" => ['card_name'],
             ]);
         }
+
+        $hiddenCards = $cardNofif;
+        foreach ($cardNofif as $index => $card) {
+            if ($card['card_location'] == 'hand') {
+                $hiddenCards[$index]['card_type'] = 'hidden';
+            }
+        }
+        $this->notify->all("cardMoved", clienttranslate('Trader-Effect: ${player_name} gave a card to ${target_player}'), [
+            "cards" => array_values($hiddenCards),
+            "player_name" => $this->getPlayerNameById($active_player),
+            "target_player" => $this->getPlayerNameById($targetPlayer),
+            "spectator" => true,
+        ]);
 
         $this->gamestate->nextState("backToPreviousPlayer");
     }

@@ -1509,6 +1509,10 @@ function (dojo, declare) {
             // 
 
             dojo.subscribe('cardMoved', this, notif => {
+                if (notif.args.spectator && !this.isSpectator) {
+                    return;
+                }
+
                 this.assassinsCleanOrphaned();
 
                 // Ensure we always get an array
