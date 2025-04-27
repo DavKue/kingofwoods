@@ -808,7 +808,7 @@ function (dojo, declare) {
         // Find the covered card element
         const coveredStock = this.findCardStock(coveredCardId);
         if (!coveredStock) {
-            console.warn('Covered card not found yet, retrying...');
+            // console.warn('Covered card not found yet, retrying...');
             setTimeout(() => this.assassinPosition(assassinId, coveredCardId), 100);
             return;
         }
@@ -816,20 +816,21 @@ function (dojo, declare) {
         const coveredDiv = $(`${coveredStock.container_div.id}_item_${coveredCardId}`);
         if (!coveredDiv) return;
 
-        // Get position relative to game area
-        const gameArea = document.getElementById('game_play_area');
-        const gameAreaRect = gameArea.getBoundingClientRect();
+        // Use getBoundingClientRect for reliable positioning
         const coveredRect = coveredDiv.getBoundingClientRect();
+        const assassinRect = assassin.div.getBoundingClientRect();
+        
+        // Calculate relative to game area
+        const gameArea = document.getElementById('game_play_area');
+        const gameRect = gameArea.getBoundingClientRect();
+        
+        // Convert to percentage-based positioning
+        const leftPercent = ((coveredRect.left - gameRect.left) / gameRect.width * 100);
+        const topPercent = ((coveredRect.top - gameRect.top) / gameRect.height * 100);
 
-        // Calculate relative position
-        const posX = coveredRect.left - gameAreaRect.left;
-        const posY = coveredRect.top - gameAreaRect.top;
-
-        // Position assassin with offset
-        dojo.style(assassin.div, {
-            left: `${posX + 0}px`,
-            top: `${posY + 0}px`,
-            position: 'absolute'
+        Object.assign(assassin.div.style, {
+            left: `${leftPercent}%`,
+            top: `${topPercent}%`,
         });
 
         // Store reference to covered card
