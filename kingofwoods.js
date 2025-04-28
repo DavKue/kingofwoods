@@ -1292,23 +1292,19 @@ function (dojo, declare) {
                                 }
                             });
 
-                            if (higherInfluenceCards.length > 0) {
-                                // Add CSS classes to non-Squires
-                                hand.items.forEach(item => {
-                                    const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                    if (!higherInfluenceCards.includes(item.id.toString())) {
-                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                    }
-                                });
-                            } else {
-                                hand.items.forEach(item => {
-                                    const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                    const itemType = this.getCardType(item.id);
-                                    if (cardInformation[itemType].influence != highestInfluence || item.id == blockedCard) {
-                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                    }
-                                });
-                            }
+                            // Add CSS classes to non-Squires
+                            hand.items.forEach(item => {
+                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                const itemType = this.getCardType(item.id);
+                                if ((higherInfluenceCards.length > 0 && !higherInfluenceCards.includes(item.id.toString()) && item.id != blockedCard) || 
+                                    (higherInfluenceCards.length === 0 && cardInformation[itemType].influence != highestInfluence && item.id != blockedCard)) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                                if (item.id == blockedCard) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
+                                }
+                            });
+
                         }
                     });
                     break;
@@ -1454,8 +1450,11 @@ function (dojo, declare) {
                             });
                             court.items.forEach(item => {
                                 const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
-                                if (!validCardsAll.includes(item.id.toString())) {
+                                if (!validCardsAll.includes(item.id.toString()) && item.id != blockedCard) {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                }
+                                if (item.id == blockedCard) {
+                                    dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
                                 }
                             });
                         }
@@ -1470,6 +1469,7 @@ function (dojo, declare) {
                     hand.items.forEach(item => {
                         const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                         dojo.removeClass(itemDiv, 'stockitem_unselectable_singlecard');
+                        dojo.removeClass(itemDiv, 'stockitem_unselectable_blocked');
                     });
                 });
             }
@@ -1478,6 +1478,7 @@ function (dojo, declare) {
                     court.items.forEach(item => {
                         const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
                         dojo.removeClass(itemDiv, 'stockitem_unselectable_singlecard');
+                        dojo.removeClass(itemDiv, 'stockitem_unselectable_blocked');
                     });
                 });
             }
