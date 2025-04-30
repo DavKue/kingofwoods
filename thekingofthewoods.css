@@ -228,8 +228,8 @@
 
 @font-face {
     font-family: 'KOTWFont';
-    src: url('img/TheKingOfTheWoodsFont.woff2') format('woff2'),
-         url('img/TheKingOfTheWoodsFont.woff') format('woff');
+    src: url('img/KingOfWoodsFont.woff2') format('woff2'),
+         url('img/KingOfWoodsFont.woff') format('woff');
     font-weight: 700; /* Match bold style */
     font-style: normal;
     font-display: swap;
