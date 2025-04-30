@@ -1366,12 +1366,18 @@ function (dojo, declare) {
                     .filter(item => item.card_location === 'court')
                     .map(item => item.card_id.toString());
     
+                    //check covered cards in court
+                    coveredCards = [];
+                    Object.values(this.gamedatas.assassins).forEach(assassin => {
+                        coveredCards.push(assassin.coveredCardId);
+                    });
+
                     const cardInformation = this.cardInformation();
                     lowestInfluence = 10;
                     this.gamedatas.cards.forEach(item => {
                         if (item.card_location == 'court' && item.card_owner == this.gamedatas.targetPlayer) {
                             const cardInfluence = cardInformation[item.card_type].influence;
-                            if (cardInfluence < lowestInfluence && item.card_type != 'Assassin' && item.card_type != 'Jester' && item.card_id != this.gamedatas.blockedCard) {
+                            if (cardInfluence < lowestInfluence && item.card_type != 'Assassin' && item.card_type != 'Jester' && item.card_id != this.gamedatas.blockedCard && !coveredCards.includes(item.card_id)) {
                                 lowestInfluence = cardInfluence;
                             }
                         }
@@ -1389,11 +1395,6 @@ function (dojo, declare) {
                         .filter(item => this.getCardType(item.id) === 'Squire')
                         .map(squire => squire.id.toString());
 
-                        //check covered cards in court
-                        coveredCards = [];
-                        Object.values(this.gamedatas.assassins).forEach(assassin => {
-                            coveredCards.push(assassin.coveredCardId);
-                        });
                         const courtIds = court.items
                         .filter(item => !coveredCards.includes(item.id.toString()))
                         .map(item => item.id.toString());

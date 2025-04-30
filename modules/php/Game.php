@@ -386,20 +386,55 @@ class Game extends \Table
             }
         }
         if ($card_name == 'Priest') {
-            $res = json_encode($target_player_id);
-            $this->DbQuery(
-                "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
-            );
-            $this->notify->all('targetPlayer', '', [$target_player_id] );
+            $sql = "SELECT * FROM cards WHERE card_owner = $target_player_id AND card_location = 'court'";
+            $targetCards = $this->getCollectionFromDB($sql);
+            $coveredCards = [];
+            foreach ($targetCards as $card) {
+                if ($card['ontop_of'] != 0) {
+                    $coveredCards[] = $card['ontop_of'];
+                }
+            }
+            $lowestInfluence = 10;
+            foreach ($targetCards as $card) {
+                $thisInfluence = $this->cards[$card['card_type']]['influence'];
+                if ($thisInfluence < $lowestInfluence && $card['card_type'] != 'Assassin' && $card['card_id'] != $card_id && !in_array($card['card_id'], $coveredCards)) {
+                    $lowestInfluence = $thisInfluence;
+                }
+            }
+            $sql2 = "SELECT * FROM cards WHERE card_owner = $player_id AND card_location = 'hand'";
+            $playerCards = $this->getCollectionFromDB($sql2);
+            $validCard = false;
+            foreach ($playerCards as $card) {
+                $thisInfluence = $this->cards[$card['card_type']]['influence'];
+                if ($thisInfluence > $lowestInfluence) {
+                    $validCard = true;
+                    break;
+                }
+            }
+            if ($validCard === false) {
+                $this->notify->all("logText", clienttranslate('Priest-Effect: There was no valid card in the court of ${target_player}'), [
+                    "player_name" => $this->getPlayerNameById($player_id),
+                    "target_player" => $this->getPlayerNameById($target_player_id),
+                ]);
+            }
 
-            $res2 = json_encode($card_id);
-            $this->DbQuery(
-                "UPDATE ingame SET value='$res2' WHERE name = 'blockedCard'"
-            );
-            $this->notify->all('blockedCard', '', [$card_id] );
 
-            $this->gamestate->nextState("playedPriest");
-            return;
+            if ($validCard === true) {
+                $res = json_encode($target_player_id);
+                $this->DbQuery(
+                    "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
+                );
+                $this->notify->all('targetPlayer', '', [$target_player_id] );
+
+                $res2 = json_encode($card_id);
+                $this->DbQuery(
+                    "UPDATE ingame SET value='$res2' WHERE name = 'blockedCard'"
+                );
+                $this->notify->all('blockedCard', '', [$card_id] );
+
+                $this->gamestate->nextState("playedPriest");
+                return;
+            }
         }
         $this->gamestate->nextState("nextPlayer");
     }
