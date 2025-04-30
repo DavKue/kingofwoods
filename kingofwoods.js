@@ -293,6 +293,8 @@ function (dojo, declare) {
                 .filter(p => p); // filter out any undefined, in case of missing IDs
             const missingPlayers = allPlayers.filter(p => !orderedIdsSet.has(p.id));
             const finalPlayerOrder = [...orderedPlayers, ...missingPlayers];
+            const textHand = _('Hand');
+            const textCourt = _('Court');
 
             Object.values(finalPlayerOrder).forEach(player => {
                 // Create player area
@@ -304,11 +306,11 @@ function (dojo, declare) {
                     </div>
                     <div class="player-zones">
                         <div class="zone hand-zone">
-                            <div class="zone-label">Hand</div>
+                            <div class="zone-label">${textHand}</div>
                             <div class="hand-container" id="hand-${player.id}"></div>
                         </div>
                         <div class="zone court-zone">
-                            <div class="zone-label">Court</div>
+                            <div class="zone-label">${textCourt}</div>
                             <div class="court-container" id="court-${player.id}"></div>
                         </div>
                     </div>
