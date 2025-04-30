@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * KingOfWoods implementation : © <David Kühn> <david@schusterfilm.de>
+ * TheKingOfTheWoods implementation : © <David Kühn> <david@schusterfilm.de>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -10,7 +10,7 @@
  *
  * states.inc.php
  *
- * KingOfWoods game states description
+ * TheKingOfTheWoods game states description
  *
  */
 

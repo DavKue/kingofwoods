@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * KingOfWoods implementation : © <David Kühn> <david@schusterfilm.de>
+ * TheKingOfTheWoods implementation : © <David Kühn> <david@schusterfilm.de>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -16,7 +16,7 @@
  */
 declare(strict_types=1);
 
-namespace Bga\Games\KingOfWoods;
+namespace Bga\Games\TheKingOfTheWoods;
 
 require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
 
@@ -1850,7 +1850,7 @@ class Game extends \Table
      */
     protected function getGameName()
     {
-        return "kingofwoods";
+        return "thekingofthewoods";
     }
 
     /**

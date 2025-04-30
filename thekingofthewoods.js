@@ -1,15 +1,15 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * KingOfWoods implementation : © <David Kühn> <david@schusterfilm.de>
+ * TheKingOfTheWoods implementation : © <David Kühn> <david@schusterfilm.de>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * kingofwoods.js
+ * thekingofthewoods.js
  *
- * KingOfWoods user interface script
+ * TheKingOfTheWoods user interface script
  * 
  * In this file, you are describing the logic of your user interface, in Javascript language.
  *
@@ -22,9 +22,9 @@ define([
     "ebg/stock"
 ],
 function (dojo, declare) {
-    return declare("bgagame.kingofwoods", ebg.core.gamegui, {
+    return declare("bgagame.thekingofthewoods", ebg.core.gamegui, {
         constructor: function(){
-            console.log('kingofwoods constructor');
+            console.log('thekingofthewoods constructor');
               
             // Here, you can init the global variables of your user interface
             // Example:
@@ -293,6 +293,8 @@ function (dojo, declare) {
                 .filter(p => p); // filter out any undefined, in case of missing IDs
             const missingPlayers = allPlayers.filter(p => !orderedIdsSet.has(p.id));
             const finalPlayerOrder = [...orderedPlayers, ...missingPlayers];
+            const textHand = _('Hand');
+            const textCourt = _('Court');
 
             Object.values(finalPlayerOrder).forEach(player => {
                 // Create player area
@@ -304,11 +306,11 @@ function (dojo, declare) {
                     </div>
                     <div class="player-zones">
                         <div class="zone hand-zone">
-                            <div class="zone-label">Hand</div>
+                            <div class="zone-label">${textHand}</div>
                             <div class="hand-container" id="hand-${player.id}"></div>
                         </div>
                         <div class="zone court-zone">
-                            <div class="zone-label">Court</div>
+                            <div class="zone-label">${textCourt}</div>
                             <div class="court-container" id="court-${player.id}"></div>
                         </div>
                     </div>
@@ -1493,7 +1495,7 @@ function (dojo, declare) {
             In this method, you associate each of your game notifications with your local method to handle it.
             
             Note: game notification names correspond to "notifyAllPlayers" and "notifyPlayer" calls in
-                  your kingofwoods.game.php file.
+                  your thekingofthewoods.game.php file.
         
         */
         setupNotifications: function()

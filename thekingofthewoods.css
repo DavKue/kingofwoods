@@ -1,15 +1,15 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * KingOfWoods implementation : © <David Kühn> <david@schusterfilm.de>
+ * TheKingOfTheWoods implementation : © <David Kühn> <david@schusterfilm.de>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * kingofwoods.css
+ * thekingofthewoods.css
  *
- * KingOfWoods stylesheet
+ * TheKingOfTheWoods stylesheet
  *
  */
 
@@ -17,8 +17,8 @@
     This is the CSS stylesheet of your game User Interface.
     
     Styles defined on this file will be applied to the HTML elements you define in your
-    HTML template (kingofwoods_kingofwoods.tpl), and to HTML elements you create dynamically
-    (in kingofwoods.js).
+    HTML template (thekingofthewoods_thekingofthewoods.tpl), and to HTML elements you create dynamically
+    (in thekingofthewoods.js).
     
     Usually, you are using CSS to:
     
@@ -228,8 +228,8 @@
 
 @font-face {
     font-family: 'KOTWFont';
-    src: url('img/KingOfWoodsFont.woff2') format('woff2'),
-         url('img/KingOfWoodsFont.woff') format('woff');
+    src: url('img/TheKingOfTheWoodsFont.woff2') format('woff2'),
+         url('img/TheKingOfTheWoodsFont.woff') format('woff');
     font-weight: 700; /* Match bold style */
     font-style: normal;
     font-display: swap;
