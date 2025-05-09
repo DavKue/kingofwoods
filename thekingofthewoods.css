@@ -70,6 +70,19 @@
     border-radius: 6px;
 }
 
+/* Court zone clickable states */
+.zone.court-zone.zone-clickable {
+    outline: 3px solid #ffeb3b;
+    box-sizing: border-box;
+    background: rgba(202, 188, 105, 0.233);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.zone.court-zone.zone-clickable:hover {
+    background: rgba(233, 206, 54, 0.322);
+}
+
 .zone-label {
     font-weight: bold;
     margin-bottom: 8px;
@@ -133,7 +146,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 110, 255, 0.35); /* Red with 20% opacity */
+    background: rgba(0, 110, 255, 0.35);
     pointer-events: none; /* Allows clicking through the overlay */
 }
 

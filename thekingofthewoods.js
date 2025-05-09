@@ -310,7 +310,7 @@ function (dojo, declare) {
                             <div class="zone-label">${textHand}</div>
                             <div class="hand-container" id="hand-${player.id}"></div>
                         </div>
-                        <div class="zone court-zone">
+                        <div class="zone court-zone" id="court-zone-${player.id}">
                             <div class="zone-label">${textCourt}</div>
                             <div class="court-container" id="court-${player.id}"></div>
                         </div>
@@ -654,47 +654,77 @@ function (dojo, declare) {
         },
 
         showPlayerTargets: function(cardId) {
-            this.statusBar.removeActionButtons()
-            
+            this.statusBar.removeActionButtons();
+            if (this.isCurrentPlayerActive()) {
+                this.statusBar.setTitle(_('${you} must choose a target court to play the card to'));
+            }
             const cardType = this.getCardType(cardId);
 
-            // Get all players (including self)
-            const players = this.gamedatas.players;
+            // Highlight clickable courts and add handlers
+            this._courtHandlers = [];
+            Object.values(this.gamedatas.players).forEach(player => {
+                const courtZone = dojo.byId(`court-zone-${player.id}`);
+                if (!courtZone) return;
 
-            // Sort Players
-            const playerOrder = this.gamedatas.playerorder;
-            const allPlayers = Object.values(players);
-            const orderedIdsSet = new Set(playerOrder.map(String));
-            const orderedPlayers = playerOrder
-                .map(playerId => allPlayers.find(p => p.id == playerId))
-                .filter(p => p); // filter out any undefined, in case of missing IDs
-            const missingPlayers = allPlayers.filter(p => !orderedIdsSet.has(p.id));
-            const finalPlayerOrder = [...orderedPlayers, ...missingPlayers];
-            
-            // Add buttons for each player
-            Object.values(finalPlayerOrder).forEach(player => {
-                cardsInCourt = true;
-                if (cardType == 'Assassin') {
-                    cardsInCourt = this.gamedatas.cards.some(card => 
-                        card.card_owner === player.id && 
-                        card.card_location === 'court'
-                    );
-                }
-                if (cardsInCourt === true) {
-                    this.statusBar.addActionButton(
-                        _('Play to ${player_name}\'s court').replace('${player_name}', player.name),
-                        () => this.confirmCardPlay(cardId, player.id),
-                        { color: player.color }
-                    );
+                // Check if court is valid target
+                const isValid = cardType === 'Assassin' ? 
+                    this.playerStocks[player.id].court.items.length > 0 :
+                    true;
+
+                if (isValid) {
+                    // Add visual class
+                    dojo.addClass(courtZone, 'zone-clickable');
+                    
+                    // Add click handler
+                    const clickHandler = dojo.connect(courtZone, 'click', () => {
+                        this.cleanupCourtSelection();
+                        this.confirmCardPlay(cardId, player.id);
+                    });
+                    
+                    // Store reference for cleanup
+                    this._courtHandlers.push({ courtZone, clickHandler });
                 }
             });
-            
+
+            // Disable current player's hand except selected assassin
+            const currentPlayerHand = this.playerStocks[this.player_id].hand;
+            currentPlayerHand.setSelectionMode(0);
+            currentPlayerHand.items.forEach(item => {
+                const itemDiv = $(`${currentPlayerHand.container_div.id}_item_${item.id}`);
+                if (item.id.toString() === this.selectedCardId) {
+                    dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
+                }
+            });
+
             // Add cancel button
             this.statusBar.addActionButton(
-                _('Cancel'),
-                () => this.cancelCardSelection(),
+                _("Cancel"),
+                () => this.cleanupCourtSelection(),
                 { color: 'secondary' }
             );
+        },
+
+        cleanupCourtSelection: function() {
+            // Remove all court highlighting and handlers
+            if (this._courtHandlers) {
+                this._courtHandlers.forEach(({ courtZone, clickHandler }) => {
+                    dojo.removeClass(courtZone, 'zone-clickable');
+                    dojo.disconnect(clickHandler);
+                });
+                this._courtHandlers = [];
+            }
+
+            // Restore current player's hand
+            const currentPlayerHand = this.playerStocks[this.player_id].hand;
+            currentPlayerHand.items.forEach(item => {
+                const itemDiv = $(`${currentPlayerHand.container_div.id}_item_${item.id}`);
+                dojo.removeClass(itemDiv, 'stockitem_unselectable_blocked');
+            });
+            currentPlayerHand.setSelectionMode(this.isCurrentPlayerActive() ? 1 : 0);
+            
+            this.statusBar.removeActionButtons();
+            this.clearSelection();
+            this.updatePageTitle();
         },
 
         unselectAllCards: function() {
