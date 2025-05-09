@@ -1459,15 +1459,20 @@ class Game extends \Table
         $currentRound = json_decode($data['currentRound']['value'], true);
         $this->setStat( $currentRound, "rounds_played");
 
-        $names = array_map(
-            fn($id) => $this->getPlayerNameById($id),
-            $winnersRound
-        );
-        $winnersString = implode(', ', $names);
-        
-        $this->notify->all("logText", clienttranslate('Winner(s) round ${round}: ${winners}'), [
+        //Round-Results-Log
+        $textWinner = clienttranslate('Winner');
+        foreach ($allCurrentScores as $thisPlayer => $score) {
+            $playerName = $this->getPlayerNameById($thisPlayer);
+            if (in_array($thisPlayer, $winnersRound)) {
+                $scoresStrings[] = $playerName . ' => ' . $score . ' (' . $textWinner . ')';
+            } else {
+                $scoresStrings[] = $playerName . ' => ' . $score;
+            }
+        }
+        $scoresString = implode('<br>', $scoresStrings);
+        $this->notify->all("logText", clienttranslate('Results round ${round}:<br>${scores}'), [
             "round"   => $currentRound,
-            "winners" => $winnersString,
+            "scores" => $scoresString,
         ]);
 
         $nameEndRound = 'end_round' . $currentRound;
