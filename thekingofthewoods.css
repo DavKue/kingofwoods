@@ -70,9 +70,14 @@
     border-radius: 6px;
 }
 
+.zone.court-zone {
+    box-sizing: border-box; /* Prevent padding/border from changing size */
+    position: relative; /* Contain the shadow */
+}
+
 /* Court zone clickable states */
 .zone.court-zone.zone-clickable {
-    outline: 3px solid #ffeb3b;
+    box-shadow: 0 0 0 3px #ffeb3b; /* Acts like an outline */
     box-sizing: border-box;
     background: rgba(202, 188, 105, 0.233);
     cursor: pointer;
