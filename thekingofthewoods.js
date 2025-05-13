@@ -47,12 +47,7 @@ function (dojo, declare) {
             };
             this.slideDuration = 500;
             this.selectedCardId = null;
-            this.actionContext = {
-                cardId: null,
-                targetPlayerId: null,
-                targetCourt: null
-            };
-            this.lookingForTarget = false;
+            this.selectedAssassin = 0;
 
             this.cardScale = 0.20; // Start with 30% size
             this.baseCardWidth = 768;
@@ -686,7 +681,7 @@ function (dojo, declare) {
                 }
             });
 
-            // Disable current player's hand except selected assassin
+            // Disable current player's hand except selected card
             const currentPlayerHand = this.playerStocks[this.player_id].hand;
             currentPlayerHand.setSelectionMode(0);
             currentPlayerHand.items.forEach(item => {
@@ -818,9 +813,10 @@ function (dojo, declare) {
             cardInformation = this.cardInformation();
 
             dojo.connect(div, 'click', () => {
-                if (this.lookingForTarget === true) {
+                if (this.selectedAssassin != 0) {
+                    const assassin = this.selectedAssassin;
                     this.cleanupAssassinSelection();
-                    this.assassinFinalizePlay(coveredCardId);
+                    this.assassinFinalizePlay(coveredCardId, assassin);
                 }
             });
 
@@ -958,9 +954,21 @@ function (dojo, declare) {
                 return;
             }
 
-            if (this.lookingForTarget === true) {
+            const cardType = this.getCardType(cardId);
+
+            if (this.selectedAssassin != 0) {
+                const assassin = this.selectedAssassin;
                 this.cleanupAssassinSelection()
-                this.assassinFinalizePlay(cardId);
+                this.assassinFinalizePlay(cardId, assassin);
+                return;
+            }
+
+            if (cardType == 'Assassin') {
+                // Store selection context
+                this.selectedAssassin = cardId;
+                
+                // Show target selection
+                this.assassinShowTargetCards(cardId);
                 return;
             }
 
@@ -1005,35 +1013,14 @@ function (dojo, declare) {
         confirmCardPlay: function(cardId, targetPlayerId) {
             const cardType = this.getCardType(cardId);
     
-            if (cardType === 'Assassin') {
-                // Get target court cards
-                const targetCourt = this.playerStocks[targetPlayerId].court;
-                const validTargets = this.assassinGetValidTargets(targetCourt);
-                
-                if (validTargets.length === 0) {
-                    this.showMessage(_("No valid targets in this court"), "error");
-                    return;
-                }
-                
-                // Store selection context
-                this.actionContext = {
-                    cardId: cardId,
-                    targetPlayerId: targetPlayerId,
-                    targetCourt: targetCourt
-                };
-                
-                // Show target selection
-                this.assassinShowTargetCards(validTargets);
-            } else {
-                //normal card play
-                this.bgaPerformAction("actPlayCard", {
-                    card_id: cardId,
-                    target_player_id: targetPlayerId,
-                    covered_card: 0
-                }).then(() => {
-                    this.clearSelection();
-                });
-            }
+            this.bgaPerformAction("actPlayCard", {
+                card_id: cardId,
+                target_player_id: targetPlayerId,
+                covered_card: 0
+            }).then(() => {
+                this.clearSelection();
+            });
+
         },
         
         knightPlayCard: function(cardId) {
@@ -1096,16 +1083,6 @@ function (dojo, declare) {
         },
 
         assassinShowTargetCards: function(targetCards) {
-            // Get all covered card IDs
-            const coveredCards = new Set(
-                Object.values(this.gamedatas.assassins || {}).map(a => a.coveredCardId.toString())
-            );
-        
-            // Filter out covered cards
-            const uncoveredValidCards = targetCards.filter(card => 
-                !coveredCards.has(card.id.toString()) // Exclude if ID is covered
-            );
-
             this.statusBar.removeActionButtons()
             if (this.isCurrentPlayerActive()) {
                 this.statusBar.setTitle(_('${you} must choose a target for the assassin'));
@@ -1116,31 +1093,41 @@ function (dojo, declare) {
             currentPlayerHand.setSelectionMode(0);
             currentPlayerHand.items.forEach(item => {
                 const itemDiv = $(`${currentPlayerHand.container_div.id}_item_${item.id}`);
-                if (item.id.toString() === this.selectedCardId) {
+                if (item.id.toString() === this.selectedAssassin) {
                     dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
                 }
             });
-        
-            // Enable target court selection
-            const targetPlayerId = this.actionContext.targetPlayerId;
-            const targetCourt = this.playerStocks[targetPlayerId].court;
-            targetCourt.setSelectionMode(1);
-        
-            // Mark valid targets
-            const validTargetIds = new Set(uncoveredValidCards.map(c => c.id.toString()));
-            targetCourt.items.forEach(item => {
-                const itemDiv = $(`${targetCourt.container_div.id}_item_${item.id}`);
-                dojo.toggleClass(itemDiv, 'stockitem_unselectable_singlecard', !validTargetIds.has(item.id.toString()));
-            });
 
-            // Make assassins clickable
-            Object.values(this.gamedatas.assassins).forEach(assassin => {
-                if (targetCards.some(card => card.id === assassin.coveredCardId)) {
-                    dojo.addClass(assassin.div, 'stockitem');
-                }
-            });
+            // Get all covered card IDs
+            const coveredCards = new Set(
+                Object.values(this.gamedatas.assassins || {}).map(a => a.coveredCardId.toString())
+            );
 
-            this.lookingForTarget = true;
+            // Enable selection in all courts
+            Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                court.setSelectionMode(1);
+
+                const validTargets = this.assassinGetValidTargets(court);
+
+                // Filter out covered cards
+                const uncoveredValidCards = validTargets.filter(card => 
+                    !coveredCards.has(card.id.toString()) // Exclude if ID is covered
+                );
+            
+                // Mark valid targets
+                const validTargetIds = new Set(uncoveredValidCards.map(c => c.id.toString()));
+                court.items.forEach(item => {
+                    const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
+                    dojo.toggleClass(itemDiv, 'stockitem_unselectable_singlecard', !validTargetIds.has(item.id.toString()));
+                });
+
+                // Make assassins clickable
+                Object.values(this.gamedatas.assassins).forEach(assassin => {
+                    if (validTargets.some(card => card.id === assassin.coveredCardId)) {
+                        dojo.addClass(assassin.div, 'stockitem');
+                    }
+                });
+            });
     
             // Add cancel button
             this.statusBar.addActionButton(
@@ -1159,13 +1146,6 @@ function (dojo, declare) {
             });
             currentPlayerHand.setSelectionMode(this.isCurrentPlayerActive() ? 1 : 0);
         
-            // Restore target court click handler
-            if (this._originalCourtClickHandler) {
-                const targetCourt = this.playerStocks[this.actionContext.targetPlayerId].court;
-                targetCourt.onItemClick = this._originalCourtClickHandler;
-                delete this._originalCourtClickHandler;
-            }
-        
             // Reset all courts
             Object.values(this.playerStocks).forEach(({ court }) => {
                 court.setSelectionMode(0);
@@ -1183,19 +1163,21 @@ function (dojo, declare) {
             this.statusBar.removeActionButtons();
             this.clearSelection();
             this.updatePageTitle();
-            this.lookingForTarget = false;
+            this.selectedAssassin = 0;
         },
 
         // Final action handler
-        assassinFinalizePlay: function(coveredCardId) {
-            const ctx = this.actionContext;
+        assassinFinalizePlay: function(coveredCardId, assassinId) {
+            const card = this.gamedatas.cards.find(c => c.card_id === coveredCardId);
+            const cardOwner = card ? card.card_owner : null;
+
             this.bgaPerformAction("actPlayCard", {
-                card_id: ctx.cardId,
-                target_player_id: ctx.targetPlayerId,
+                card_id: assassinId,
+                target_player_id: cardOwner,
                 covered_card: coveredCardId
             }).then(() => {
                 this.clearSelection();
-                delete this.actionContext;
+                this.selectedAssassin = 0;
             });
         },
 
@@ -1304,7 +1286,6 @@ function (dojo, declare) {
                                 }
                             });
                         }
-
                     });
                     break;
                 case 'selectionKnight':
