@@ -1301,8 +1301,20 @@ class Game extends \Table
         // Give some extra time to the active player when he completed an action
         $this->giveExtraTime($player_id);
         
-        $this->activeNextPlayer();
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'winnerToStart'"
+        );
+        $winnerToStart = json_decode($data['winnerToStart']['value'], true);
 
+        if ($winnerToStart == 0) {
+            $this->activeNextPlayer();
+        } else {
+            $this->gamestate->changeActivePlayer( $winnerToStart );
+            $this->DbQuery(
+                "UPDATE ingame SET value = 0 WHERE name = 'winnerToStart'"
+            );
+        }
+        
         // Check if new player still has cards
         $sql2 = "SELECT * FROM cards WHERE card_location = 'hand'";
         $handCards = $this->getCollectionFromDB($sql2);
@@ -1492,7 +1504,13 @@ class Game extends \Table
         //Handle Game Modes and Transitions
         if ($roundsMode === 1) {
             $this->gamestate->nextState("endGame");
+            return;
         }
+
+        $res3 = $winnersRound[0];
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res3' WHERE name = 'winnerToStart'"
+        );
 
         if ($roundsMode === 2) {
             //End game or restart round
@@ -1948,6 +1966,9 @@ class Game extends \Table
         $this->DbQuery($sql);
         // Create empty 'activeZombie'-Entry
         $sql = "INSERT INTO ingame (name, value) VALUES ('activeZombie', 0)";
+        $this->DbQuery($sql);
+        // Create empty 'winnerToStart'-Entry
+        $sql = "INSERT INTO ingame (name, value) VALUES ('winnerToStart', 0)";
         $this->DbQuery($sql);
 
         // Dummy content.
