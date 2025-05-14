@@ -1304,7 +1304,12 @@ class Game extends \Table
         $data = $this->getCollectionFromDb(
             "SELECT * FROM ingame WHERE name = 'winnerToStart'"
         );
-        $winnerToStart = json_decode($data['winnerToStart']['value'], true);
+
+        //Validity Check - Until all current games are closed
+        $winnerToStart = null;
+        if (!empty($data) && isset($data['winnerToStart']['value'])) {
+            $winnerToStart = json_decode($data['winnerToStart']['value'], true);
+        }
 
         if ($winnerToStart == 0) {
             $this->activeNextPlayer();
@@ -1507,10 +1512,19 @@ class Game extends \Table
             return;
         }
 
-        $res3 = $winnersRound[0];
-        $this->DbQuery(
-            "UPDATE ingame SET value='$res3' WHERE name = 'winnerToStart'"
+        //Validity Check - Until all current games are closed
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'winnerToStart'"
         );
+
+        // Check if 'winnerToStart' entry exists in the result
+        $winnerToStart = null;
+        if (!empty($data) && isset($data['winnerToStart']['value'])) {
+            $res3 = $winnersRound[0];
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res3' WHERE name = 'winnerToStart'"
+            );
+        }
 
         if ($roundsMode === 2) {
             //End game or restart round
