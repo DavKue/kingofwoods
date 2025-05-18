@@ -949,6 +949,15 @@ function (dojo, declare) {
         
         // Modified card click handler:
         onCardClick: function(cardId) {
+            // Get the actual card element
+            const cardElement = this.findCardElement(cardId);
+            
+            // Check if card is marked as unselectable
+            if (cardElement && dojo.hasClass(cardElement, 'stockitem_unselectable_singlecard')) {
+                this.clearSelection();
+                return;
+            }
+
             if (this.selectedCardId === cardId) {
                 this.clearSelection();
                 return;
@@ -1008,6 +1017,26 @@ function (dojo, declare) {
             const cardStock = this.findCardStock(cardId);
             cardStock.selectItem(cardId);
             this.showPlayerTargets(cardId);
+        },
+
+        findCardElement: function(cardId) {
+            // Search through all stocks
+            for (const playerId in this.playerStocks) {
+                const { hand, court } = this.playerStocks[playerId];
+                
+                // Check hand stock
+                const handItem = hand.items.find(item => item.id == cardId);
+                if (handItem) {
+                    return $(`${hand.container_div.id}_item_${cardId}`);
+                }
+                
+                // Check court stock
+                const courtItem = court.items.find(item => item.id == cardId);
+                if (courtItem) {
+                    return $(`${court.container_div.id}_item_${cardId}`);
+                }
+            }
+            return null;
         },
 
         confirmCardPlay: function(cardId, targetPlayerId) {
