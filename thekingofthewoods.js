@@ -217,20 +217,32 @@ function (dojo, declare) {
             Object.values(this.gamedatas.players).forEach(player => {
                 const infoDiv = this.getPlayerPanelElement(player.id);
                 if (!infoDiv) return;
-        
+
+                let content = '';
                 switch(this.gamedatas.roundsMode) {
                     case 2:
-                        infoDiv.innerHTML = _("Points from prior rounds: ${points}/42").replace('${points}', player.rounds_before_points);
+                        content += _("Points from prior rounds: ${points}/42").replace('${points}', player.rounds_before_points);
                         break;
                     case 3:
-                        infoDiv.innerHTML = _("Rounds won: ${won}/2").replace('${won}', player.rounds_won);
+                        content += _("Rounds won: ${won}/2").replace('${won}', player.rounds_won);
                         break;
                     case 4:
-                        infoDiv.innerHTML = _("Rounds won: ${won}/3").replace('${won}', player.rounds_won);
+                        content += _("Rounds won: ${won}/3").replace('${won}', player.rounds_won);
                         break;
                     default:
-                        infoDiv.innerHTML = '';
+                        content = '';
                 }
+
+                // Count cards in hand for this player
+                const handCardCount = Object.values(this.gamedatas.cards).filter(card =>
+                    card.card_owner === player.id && card.card_location === 'hand'
+                ).length;
+
+                // Add Hands
+                content += `<br>` + _("Hand: <b>${cards} cards</b>").replace('${cards}', handCardCount);
+
+                // Set the final HTML
+                infoDiv.innerHTML = content;
             });
         },
 
@@ -1642,6 +1654,7 @@ function (dojo, declare) {
 
                 this.gamedatas.cards = allCards;
                 this.updateCardDisplay(cards);
+                this.updatePlayerPanels();
             });
             this.notifqueue.setSynchronous('cardMoved', 700);
 
