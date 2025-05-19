@@ -293,6 +293,10 @@ function (dojo, declare) {
             const textCourt = _('Court');
 
             Object.values(finalPlayerOrder).forEach(player => {
+                const isCurrentPlayer = player.id == this.player_id;
+                console.log('isCurrent:', isCurrentPlayer);
+                console.log('this player id:', this.player_id);
+                console.log('player id:', player.id);
                 // Create player area
                 const playerDiv = document.createElement('div');
                 playerDiv.className = 'player-area';
@@ -316,6 +320,12 @@ function (dojo, declare) {
                 // Initialize Hand Stock
                 const handStock = new ebg.stock();
                 handStock.create(this, $(`hand-${player.id}`), 768, 1181);
+                if (isCurrentPlayer) {
+                    handStock.horizontal_overlap  = 100;
+                } else {
+                    handStock.horizontal_overlap  = 22;
+                }
+
                 this.configureStock(handStock);
 
                 // Initialize Court Stock
@@ -1331,6 +1341,8 @@ function (dojo, declare) {
 
                             // Enable selection mode but filter in click handler
                             hand.setSelectionMode(1);
+                            hand.horizontal_overlap  = 100;
+                            hand.updateDisplay();
                             
                             if (squireIds.length > 0) {
                                 // Add CSS classes to non-Squires
@@ -1563,6 +1575,12 @@ function (dojo, declare) {
                         dojo.removeClass(itemDiv, 'stockitem_unselectable_singlecard');
                         dojo.removeClass(itemDiv, 'stockitem_unselectable_blocked');
                     });
+
+                    const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                    if (stateName === 'selectionKnight' && !isCurrentPlayer) {
+                        hand.horizontal_overlap  = 22;
+                        hand.updateDisplay();
+                    }
                 });
             }
             if (stateName === 'selectionScholar' || stateName === 'selectionPriestSecond') {
