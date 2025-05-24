@@ -415,12 +415,13 @@ class Game extends \Table
                     break;
                 }
             }
-            if ($validCard === false) {
-                $this->notify->all("logText", clienttranslate('Priest-Effect: There was no valid card in the court of ${target_player}'), [
-                    "player_name" => $this->getPlayerNameById($player_id),
-                    "target_player" => $this->getPlayerNameById($target_player_id),
-                ]);
-            }
+            // Deactivated Log - Author didn´t want that information to be public. Lets see if players are confused, they can´t use the priests feature here.
+            // if ($validCard === false) {
+            //     $this->notify->all("logText", clienttranslate('Priest-Effect: There was no valid card in the court of ${target_player}'), [
+            //         "player_name" => $this->getPlayerNameById($player_id),
+            //         "target_player" => $this->getPlayerNameById($target_player_id),
+            //     ]);
+            // }
 
 
             if ($validCard === true) {
