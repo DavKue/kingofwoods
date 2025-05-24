@@ -975,7 +975,8 @@ function (dojo, declare) {
             const cardElement = this.findCardElement(cardId);
             
             // Check if card is marked as unselectable
-            if (cardElement && dojo.hasClass(cardElement, 'stockitem_unselectable_singlecard')) {
+            if ((cardElement && dojo.hasClass(cardElement, 'stockitem_unselectable_singlecard')) ||
+                (cardElement && dojo.hasClass(cardElement, 'stockitem_unselectable_blocked'))) {
                 this.clearSelection();
                 return;
             }
@@ -1407,7 +1408,7 @@ function (dojo, declare) {
                                 }
                             });
 
-                            // Add CSS classes to non-Squires
+                            // Add CSS classes to unplayable cards
                             hand.items.forEach(item => {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                 const itemType = this.getCardType(item.id);
