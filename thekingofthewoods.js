@@ -1456,8 +1456,6 @@ function (dojo, declare) {
                                 }
                             });
 
-                            console.log('Card Unter 5:', validCardsUnderFive);
-
                             if (validCardsUnderFive.length > 0) {
                                 // Add CSS classes to non-Squires
                                 court.items.forEach(item => {
@@ -1532,7 +1530,7 @@ function (dojo, declare) {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                 if (
                                     (playedSquireIds.length > 0 && squireIds.length > 0 && !squireIds.includes(item.id.toString())) ||
-                                    (courtIds < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
+                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
                                     (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin') ||
                                     (itemInfluence <= lowestInfluence)
                                     ) {
