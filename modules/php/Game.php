@@ -94,6 +94,7 @@ class Game extends \Table
         $squireInCourt = false;
         $squireInHand = false;
         $inCourtAll = 0;
+        $inHandAll = 0;
         $assassinsInCourt = 0;
         $guardInCourt = false;
         $coveredCards = [];
@@ -112,6 +113,9 @@ class Game extends \Table
             }
             if ($card['card_type'] == 'Squire' && $card['card_owner'] == $player_id && $card['card_location'] == 'hand') {
                 $squireInHand = true;
+            }
+            if ($card['card_owner'] == $player_id && $card['card_location'] == 'hand') {
+                $inHandAll = $inHandAll + 1;
             }
             if ($card['card_owner'] == $player_id && $card['card_location'] == 'court') {
                 $inCourtAll = $inCourtAll + 1;
@@ -133,7 +137,7 @@ class Game extends \Table
         if ($squireInCourt === true && $squireInHand === true && $card_name != 'Squire') {
             throw new \BgaUserException('You have to play a squire');
         }
-        if ($card_name == 'Princess' && ($inCourtAll - ($assassinsInCourt*2)) < 3) {
+        if ($card_name == 'Princess' && ($inCourtAll - ($assassinsInCourt*2)) < 3 && $inHandAll > 1) {
             throw new \BgaUserException('You don´t have enough cards in that court to play the princess');
         }
         if ($card_name == 'Assassin' && $guardInCourt === true && $covered_card_name != 'Guard') {
@@ -1329,24 +1333,7 @@ class Game extends \Table
         while ($emptyHand === true) {
             $new_player_id = (int)$this->getActivePlayerId();
             foreach ($handCards as $card) {
-                //Also skip if only unplayable Princess in Hand
-                $skip = false;
-                if ($card['card_type'] == 'Princess' && $card['card_owner'] == $new_player_id) {
-                    $sql3 = "SELECT * FROM cards WHERE card_location = 'court' AND card_owner = $new_player_id";
-                    $courtCards = $this->getCollectionFromDB($sql3);
-                    $countAssassins = 0;
-                    foreach ($courtCards as $card) {
-                        if ($card['card_type'] == 'Assassin') {
-                            $countAssassins = $countAssassins + 1;
-                        }
-                    }
-                    $courtAmount = count($courtCards) - ($countAssassins*2);
-                    if ($courtAmount < 3) {
-                        $skip = true;
-                    }
-                }
-
-                if ($card['card_owner'] == $new_player_id && $skip === false) {
+                if ($card['card_owner'] == $new_player_id) {
                     $emptyHand = false;
                     break 2;
                 }

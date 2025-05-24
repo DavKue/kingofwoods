@@ -1330,7 +1330,7 @@ function (dojo, declare) {
                             hand.items.forEach(item => {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                 if ((playedSquireIds.length > 0 && squireIds.length > 0) && (!squireIds.includes(item.id.toString())) ||
-                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess') ||
+                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
                                     (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin')
                                     ) {
                                     dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
@@ -1519,7 +1519,7 @@ function (dojo, declare) {
                                 const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
                                 if (
                                     (playedSquireIds.length > 0 && squireIds.length > 0 && !squireIds.includes(item.id.toString())) ||
-                                    (courtIds < 3 && this.getCardType(item.id) === 'Princess') ||
+                                    (courtIds < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
                                     (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin') ||
                                     (itemInfluence <= lowestInfluence)
                                     ) {
