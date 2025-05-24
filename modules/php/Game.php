@@ -205,7 +205,6 @@ class Game extends \Table
                     "player_name" => $this->getPlayerNameById($player_id),
                     "target_player" => $this->getPlayerNameById($target_player_id),
                 ]);
-                throw new \BgaUserException('No cards available for selection.');
             } else {
                 $randomIndex = random_int(0, count($cardIds) - 1);
                 $randomCardId = $cardIds[$randomIndex];
