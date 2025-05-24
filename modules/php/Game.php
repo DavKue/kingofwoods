@@ -383,7 +383,13 @@ class Game extends \Table
                     "UPDATE ingame SET value='$res' WHERE name = 'targetPlayer'"
                 );
                 $this->notify->all('targetPlayer', '', [$target_player_id] );
-    
+
+                $res2 = json_encode($card_id);
+                $this->DbQuery(
+                    "UPDATE ingame SET value='$res2' WHERE name = 'blockedCard'"
+                );
+                $this->notify->all('blockedCard', '', [$card_id] );
+
                 $this->gamestate->nextState("playedScholar");
                 return;
             }
@@ -742,7 +748,8 @@ class Game extends \Table
                 $card_name = $card['card_type'];
                 $validCard = true;
             }
-            if ($this->cards[$card['card_type']]['influence'] > 5 && $card['card_type'] != 'Assassin' && $card['card_type'] != 'Scholar' && !in_array($card['card_id'], $coveredCards)) {
+            $this->dump('### Card Type ####', $card['card_type']);
+            if ($this->cards[$card['card_type']]['influence'] < 5 && $card['card_type'] != 'Assassin' && $card['card_type'] != 'Scholar' && !in_array($card['card_id'], $coveredCards)) {
                 $influenceUnderFive = true;
             }
         }
@@ -801,6 +808,12 @@ class Game extends \Table
             "spectator" => true,
             "i18n" => ['card_name'],
         ]);
+
+        $res2 = json_encode(0);
+        $this->DbQuery(
+            "UPDATE ingame SET value='$res2' WHERE name = 'blockedCard'"
+        );
+        $this->notify->all('blockedCard', '', [0] );
 
         $this->gamestate->nextState("nextPlayer");
     }

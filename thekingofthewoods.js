@@ -1432,6 +1432,7 @@ function (dojo, declare) {
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
                         const isActive = this.isCurrentPlayerActive();
+                        const blockedCard = this.gamedatas.blockedCard;
                         hand.setSelectionMode(0);
                         court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
     
@@ -1455,19 +1456,27 @@ function (dojo, declare) {
                                 }
                             });
 
-                            if (validCardsUnderFive > 0) {
+                            console.log('Card Unter 5:', validCardsUnderFive);
+
+                            if (validCardsUnderFive.length > 0) {
                                 // Add CSS classes to non-Squires
                                 court.items.forEach(item => {
                                     const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
-                                    if (!validCardsUnderFive.includes(item.id.toString())) {
+                                    if (!validCardsUnderFive.includes(item.id.toString()) && item.id != blockedCard) {
                                         dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                    if (item.id == blockedCard) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
                                     }
                                 });
                             } else {
                                 court.items.forEach(item => {
                                     const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
-                                    if (!validCardsAll.includes(item.id.toString())) {
+                                    if (!validCardsAll.includes(item.id.toString()) && item.id != blockedCard) {
                                         dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                    if (item.id == blockedCard) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
                                     }
                                 });
                             }
