@@ -995,7 +995,10 @@ function (dojo, declare) {
                 return;
             }
 
-            if (cardType == 'Assassin') {
+            if (cardType == 'Assassin' &&
+                this.gamedatas.gamestate.name != 'selectionTraderPlayer' &&
+                this.gamedatas.gamestate.name != 'selectionTraderOpponent' &&
+                this.gamedatas.gamestate.name != 'selectionKnight') {
                 // Store selection context
                 this.selectedAssassin = cardId;
                 
