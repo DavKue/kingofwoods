@@ -654,6 +654,11 @@ class Game extends \Table
         $sql = "SELECT * FROM cards WHERE card_owner = $player_id AND card_location = 'hand'";
         $cards = $this->getCollectionFromDB($sql);
 
+        $data3 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'blockedCard'"
+        );
+        $blockedCard = json_decode($data3['blockedCard']['value'], true);
+
         // check input values (and find card name)
         $card_name = 'unknown';
         $validCard = false;
@@ -661,12 +666,12 @@ class Game extends \Table
         $highestInfluence = 0;
         foreach ($cards as $card) {
             $thisInfluence = $this->cards[$card['card_type']]['influence'];
-            if ($card['card_id'] == $card_id) {
+            if ($card['card_id'] == $card_id && $blockedCard != $card['card_id']) {
                 $validCard = true;
                 $selectedInfluence = $thisInfluence;
                 $card_name = $card['card_type'];
             }
-            if ($thisInfluence > $highestInfluence) {
+            if ($thisInfluence > $highestInfluence && $blockedCard != $card['card_id']) {
                 $highestInfluence = $thisInfluence;
             }
         }
