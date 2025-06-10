@@ -1390,11 +1390,10 @@ function (dojo, declare) {
                         const allPlayers = this.gamedatas.players;
                         const targetPlayerID = this.gamedatas.targetPlayer;
                         const targetPlayer = allPlayers[targetPlayerID]; // Use bracket notation
-                        const targetPlayerName = targetPlayer ? targetPlayer.name : "Unknown Player";
-                        this.statusBar.setTitle(
-                            _('Trader: ${you} must give ${targetPlayerName} back a card with higher influence (or the highest)')
-                            .replace('${targetPlayerName}', targetPlayerName)
-                        );
+                        let args = [];
+                        args.targetPlayerName = targetPlayer ? targetPlayer.name : "Unknown Player";
+                        const statusText = _('Trader: ${you} must give ${targetPlayerName} back a card with higher influence (or the highest)');
+                        this.statusBar.setTitle(statusText, args);
                     }
 
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
