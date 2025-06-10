@@ -306,9 +306,6 @@ function (dojo, declare) {
 
             Object.values(finalPlayerOrder).forEach(player => {
                 const isCurrentPlayer = player.id == this.player_id;
-                console.log('isCurrent:', isCurrentPlayer);
-                console.log('this player id:', this.player_id);
-                console.log('player id:', player.id);
                 // Create player area
                 const playerDiv = document.createElement('div');
                 playerDiv.className = 'player-area';
@@ -1387,6 +1384,19 @@ function (dojo, declare) {
                     break;
                 case 'selectionTraderOpponent':
                     //THIS IS -> Target Player has to give card with higher influence back (or highest)
+                    // Update status bar
+                    const isActiveStart = this.isCurrentPlayerActive();
+                    if (isActiveStart) {
+                        const allPlayers = this.gamedatas.players;
+                        const targetPlayerID = this.gamedatas.targetPlayer;
+                        const targetPlayer = allPlayers[targetPlayerID]; // Use bracket notation
+                        const targetPlayerName = targetPlayer ? targetPlayer.name : "Unknown Player";
+                        this.statusBar.setTitle(
+                            _('Trader: ${you} must give ${targetPlayerName} back a card with higher influence (or the highest)')
+                            .replace('${targetPlayerName}', targetPlayerName)
+                        );
+                    }
+
                     Object.values(this.playerStocks).forEach(({ hand, court }) => {
                         const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
                         const isActive = this.isCurrentPlayerActive();
@@ -1604,6 +1614,8 @@ function (dojo, declare) {
                         hand.horizontal_overlap  = 22;
                         hand.updateDisplay();
                     }
+
+                    this.updatePageTitle()
                 });
             }
             if (stateName === 'selectionScholar' || stateName === 'selectionPriestSecond') {
