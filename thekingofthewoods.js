@@ -123,6 +123,11 @@ function (dojo, declare) {
             //Setup Amount of Cards-info
             this.updateGlobalCardCounts(); 
 
+            //Show Round Popup if needed
+            if (this.gamedatas.showPopup == true) {
+                this.showRoundPopup(this.gamedatas.currentRound); 
+            }
+
             console.log( "Ending game setup" );
         },
        
@@ -1253,18 +1258,18 @@ function (dojo, declare) {
         },
 
         showRoundPopup: function(currentRound) {
-            // Remove existing popup
-            const existingPopup = $('roundPopup');
-            if (existingPopup) existingPopup.parentNode.removeChild(existingPopup);
-        
+            // Remove existing popup if present
+            const existingPopup = document.getElementById('roundPopup');
+            if (existingPopup) existingPopup.remove();
+
             // Create popup content
             const popupDiv = document.createElement('div');
             popupDiv.id = 'roundPopup';
             popupDiv.className = 'round-popup';
-            
+
             // Get status message based on game mode
             let statusMessage = '';
-            switch(this.gamedatas.roundsMode) {
+            switch (this.gamedatas.roundsMode) {
                 case 2:
                     statusMessage = _("No player has reached 42 points yet.");
                     break;
@@ -1275,23 +1280,26 @@ function (dojo, declare) {
                     statusMessage = _("No player has won 3 rounds yet.");
                     break;
             }
-        
+
+            // Create popup HTML
             popupDiv.innerHTML = `
                 <h2>${_("Round")} ${currentRound} ${_("finished")}</h2>
                 ${statusMessage ? `<p>${statusMessage}</p>` : ''}
-                <p>${_("Starting next round...")}</p>
+                <button id="startNextRoundBtn" class="round-popup-button">
+                    ${_("Start Round")} ${currentRound + 1}
+                </button>
             `;
-        
-            // Add to game area
+
+            // Add popup to game area
             document.getElementById('game_play_area').appendChild(popupDiv);
-        
-            // Auto-remove after 2 seconds
-            setTimeout(() => {
+
+            // Add click handler for the button
+            document.getElementById('startNextRoundBtn').addEventListener('click', () => {
                 popupDiv.style.animation = 'fadeOut 0.5s ease-out';
-                setTimeout(() => {
-                    popupDiv.parentNode.removeChild(popupDiv);
-                }, 500);
-            }, 2000);
+                setTimeout(() => popupDiv.remove(), 500);
+
+                this.bgaPerformAction("actRemovePopup", {}, { checkAction: false, checkPossibleActions: false });
+            });
         },
 
         // Update stock selection mode dynamically:

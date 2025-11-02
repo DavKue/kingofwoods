@@ -20,6 +20,8 @@ namespace Bga\Games\TheKingOfTheWoods;
 
 require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
 
+use \Bga\GameFramework\Actions\CheckAction;
+
 class Game extends \Table
 {
     private static array $CARD_TYPES;
@@ -1091,6 +1093,30 @@ class Game extends \Table
         $this->gamestate->nextState("nextPlayer");
     }
 
+    #[CheckAction(false)]
+    public function actRemovePopup (): void
+    {
+        //Remove Popup
+        $current_player_id = (int) $this->getCurrentPlayerId();
+
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'showPopup'"
+        );
+
+        if (!empty($data) && isset($data['showPopup']['value'])) {
+            $showPopup = json_decode($data['showPopup']['value'], true);
+
+            $showPopup[$current_player_id] = false;
+
+            $res = json_encode($showPopup);
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res' WHERE name = 'showPopup'"
+            );
+        }
+
+        $this->notify->player($current_player_id, 'showPopup', '', [false]);
+    }
+
     public function updateScores (): void
     {
         $sql = "SELECT * FROM cards";
@@ -1579,6 +1605,24 @@ class Game extends \Table
             ]);
         }
 
+        //Activate Popups
+        $data = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'showPopup'"
+        );
+
+        if (!empty($data) && isset($data['showPopup']['value'])) {
+            $showPopup = json_decode($data['showPopup']['value'], true);
+
+            foreach ($showPopup as $player_id => $value) {
+                $showPopup[$player_id] = true;
+            }
+            $res = json_encode($showPopup);
+            $this->DbQuery(
+                "UPDATE ingame SET value='$res' WHERE name = 'showPopup'"
+            );
+        }
+
+
         //Reset Cards
         $this->DbQuery("UPDATE cards SET card_location = 'aside', card_owner = 'noPlayerID', ontop_of = 0");
         $sql = "SELECT * FROM cards";
@@ -1860,6 +1904,17 @@ class Game extends \Table
         $blockedCard = json_decode($data4['blockedCard']['value'], true);
         $result['blockedCard'] = $blockedCard;
 
+        $data5 = $this->getCollectionFromDb(
+            "SELECT * FROM ingame WHERE name = 'showPopup'"
+        );
+        if (!empty($data5) && isset($data5['showPopup']['value'])) {
+            $showPopup = json_decode($data5['showPopup']['value'], true);
+            $showPopupPlayer = $showPopup[$current_player_id];
+        } else {
+            $showPopupPlayer = false;
+        }
+        $result['showPopup'] = $showPopupPlayer;
+
         $gamestate = $this->gamestate->state();
 
         $allCards = $this->getCollectionFromDB("SELECT * FROM cards");
@@ -1988,6 +2043,15 @@ class Game extends \Table
         $this->DbQuery($sql);
         // Create empty 'winnerToStart'-Entry
         $sql = "INSERT INTO ingame (name, value) VALUES ('winnerToStart', 0)";
+        $this->DbQuery($sql);
+
+        // Create empty 'showPopup'-Entry
+        $showPopup = [];
+        foreach ($players as $player_id => $player) {
+            $showPopup[$player_id] = false;
+        }
+        $res = json_encode($showPopup);
+        $sql = "INSERT INTO ingame (name, value) VALUES ('showPopup', '$res')";
         $this->DbQuery($sql);
 
         // Dummy content.
