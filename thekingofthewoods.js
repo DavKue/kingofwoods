@@ -125,7 +125,8 @@ function (dojo, declare) {
 
             //Show Round Popup if needed
             if (this.gamedatas.showPopup == true) {
-                this.showRoundPopup(this.gamedatas.currentRound); 
+                const round = this.gamedatas.currentRound - 1;
+                this.showRoundPopup(round); 
             }
 
             console.log( "Ending game setup" );
