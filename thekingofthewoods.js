@@ -109,7 +109,20 @@ function (dojo, declare) {
             this.initializePlayerStocks(gamedatas.players);
             
             // Load initial card positions
-            this.updateCardDisplay(gamedatas.cards);
+            setTimeout(() => {
+                if (!this.playerStocks || Object.keys(this.playerStocks).length === 0) {
+                    console.warn("Player stocks not initialized yet, skipping card display.");
+                    return;
+                }
+
+                if (!gamedatas.cards) {
+                    console.warn("No cards found in gamedatas yet.");
+                    return;
+                }
+
+                // Load initial card positions
+                this.updateCardDisplay(gamedatas.cards);
+            }, 100);
 
 
             // Setup game notifications to handle (see "setupNotifications" method below)
