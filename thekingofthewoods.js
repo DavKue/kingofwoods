@@ -1318,187 +1318,295 @@ function (dojo, declare) {
 
         // Update stock selection mode dynamically:
         onEnteringState: function(stateName, args) {
-            switch(stateName) {
-                case 'playerTurn':
-                    //THIS IS -> Regular Card Selection
-                    playedSquireIds = this.gamedatas.cards
-                    .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
-                    .map(squire => squire.card_id.toString());
-                    allCourtCards = this.gamedatas.cards
-                    .filter(item => item.card_location === 'court')
-                    .map(item => item.card_id.toString());
+            setTimeout(() => {
+                switch(stateName) {
+                    case 'playerTurn':
+                        //THIS IS -> Regular Card Selection
+                        playedSquireIds = this.gamedatas.cards
+                        .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
+                        .map(squire => squire.card_id.toString());
+                        allCourtCards = this.gamedatas.cards
+                        .filter(item => item.card_location === 'court')
+                        .map(item => item.card_id.toString());
 
-                    // Enable selection only in current player's hand
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
-                        const isActive = this.isCurrentPlayerActive();
-                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
-                        court.setSelectionMode(0); // Never select from courts
+                        // Enable selection only in current player's hand
+                        Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                            const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                            const isActive = this.isCurrentPlayerActive();
+                            hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                            court.setSelectionMode(0); // Never select from courts
 
-                        if (isCurrentPlayer && isActive) {
-                            //Check mandatory Squire Play
-                            const squireIds = hand.items
-                            .filter(item => this.getCardType(item.id) === 'Squire')
-                            .map(squire => squire.id.toString());
-
-                            //check covered cards in court
-                            coveredCards = [];
-                            Object.values(this.gamedatas.assassins).forEach(assassin => {
-                                coveredCards.push(assassin.coveredCardId);
-                            });
-                            const courtIds = court.items
-                            .filter(item => !coveredCards.includes(item.id.toString()))
-                            .map(item => item.id.toString());
-
-                            hand.items.forEach(item => {
-                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                if ((playedSquireIds.length > 0 && squireIds.length > 0) && (!squireIds.includes(item.id.toString())) ||
-                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
-                                    (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin')
-                                    ) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                }
-                            });
-                        }
-                    });
-                    break;
-                case 'selectionKnight':
-                    //THIS IS -> Take Card from Targer Player Hand (Squire if possible)
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
-                        const isActive = this.isCurrentPlayerActive();
-                
-                        if (isTargetPlayer && isActive) {
-                            // Get all Squire IDs
-                            const squireIds = hand.items
+                            if (isCurrentPlayer && isActive) {
+                                //Check mandatory Squire Play
+                                const squireIds = hand.items
                                 .filter(item => this.getCardType(item.id) === 'Squire')
                                 .map(squire => squire.id.toString());
 
-                            // Enable selection mode but filter in click handler
-                            hand.setSelectionMode(1);
-                            hand.horizontal_overlap  = 100;
-                            hand.updateDisplay();
-                            
-                            if (squireIds.length > 0) {
-                                // Add CSS classes to non-Squires
+                                //check covered cards in court
+                                coveredCards = [];
+                                Object.values(this.gamedatas.assassins).forEach(assassin => {
+                                    coveredCards.push(assassin.coveredCardId);
+                                });
+                                const courtIds = court.items
+                                .filter(item => !coveredCards.includes(item.id.toString()))
+                                .map(item => item.id.toString());
+
                                 hand.items.forEach(item => {
                                     const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                    if (!squireIds.includes(item.id.toString())) {
+                                    if ((playedSquireIds.length > 0 && squireIds.length > 0) && (!squireIds.includes(item.id.toString())) ||
+                                        (courtIds.length < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
+                                        (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin')
+                                        ) {
                                         dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
                                     }
                                 });
                             }
+                        });
+                        break;
+                    case 'selectionKnight':
+                        //THIS IS -> Take Card from Targer Player Hand (Squire if possible)
+                        Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                            const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
+                            const isActive = this.isCurrentPlayerActive();
+                    
+                            if (isTargetPlayer && isActive) {
+                                // Get all Squire IDs
+                                const squireIds = hand.items
+                                    .filter(item => this.getCardType(item.id) === 'Squire')
+                                    .map(squire => squire.id.toString());
 
-                        } else {
-                            hand.setSelectionMode(0);
+                                // Enable selection mode but filter in click handler
+                                hand.setSelectionMode(1);
+                                hand.horizontal_overlap  = 100;
+                                hand.updateDisplay();
+                                
+                                if (squireIds.length > 0) {
+                                    // Add CSS classes to non-Squires
+                                    hand.items.forEach(item => {
+                                        const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                        if (!squireIds.includes(item.id.toString())) {
+                                            dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                        }
+                                    });
+                                }
+
+                            } else {
+                                hand.setSelectionMode(0);
+                            }
+                            court.setSelectionMode(0);
+                        });
+                        break;
+                    case 'selectionTraderPlayer':
+                        //THIS IS -> Give Target Player on Card from your Hand
+                        Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                            const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                            const isActive = this.isCurrentPlayerActive();
+                            hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                            court.setSelectionMode(0); // Never select from courts
+                        });
+                        break;
+                    case 'selectionTraderOpponent':
+                        //THIS IS -> Target Player has to give card with higher influence back (or highest)
+                        // Update status bar
+                        const isActiveStart = this.isCurrentPlayerActive();
+                        if (isActiveStart) {
+                            const allPlayers = this.gamedatas.players;
+                            const targetPlayerID = this.gamedatas.targetPlayer;
+                            const targetPlayer = allPlayers[targetPlayerID]; // Use bracket notation
+                            let args = [];
+                            args.targetPlayerName = targetPlayer ? targetPlayer.name : "Unknown Player";
+                            const statusText = _('Trader: ${you} must give ${targetPlayerName} back a card with higher influence (or the highest)');
+                            this.statusBar.setTitle(statusText, args);
                         }
-                        court.setSelectionMode(0);
-                    });
-                    break;
-                case 'selectionTraderPlayer':
-                    //THIS IS -> Give Target Player on Card from your Hand
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
-                        const isActive = this.isCurrentPlayerActive();
-                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
-                        court.setSelectionMode(0); // Never select from courts
-                    });
-                    break;
-                case 'selectionTraderOpponent':
-                    //THIS IS -> Target Player has to give card with higher influence back (or highest)
-                    // Update status bar
-                    const isActiveStart = this.isCurrentPlayerActive();
-                    if (isActiveStart) {
-                        const allPlayers = this.gamedatas.players;
-                        const targetPlayerID = this.gamedatas.targetPlayer;
-                        const targetPlayer = allPlayers[targetPlayerID]; // Use bracket notation
-                        let args = [];
-                        args.targetPlayerName = targetPlayer ? targetPlayer.name : "Unknown Player";
-                        const statusText = _('Trader: ${you} must give ${targetPlayerName} back a card with higher influence (or the highest)');
-                        this.statusBar.setTitle(statusText, args);
-                    }
 
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
-                        const isActive = this.isCurrentPlayerActive();
-                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
-                        court.setSelectionMode(0); // Never select from courts
+                        Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                            const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                            const isActive = this.isCurrentPlayerActive();
+                            hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                            court.setSelectionMode(0); // Never select from courts
 
-                        if (isCurrentPlayer && isActive) {
-                            //Check Influence of Cards in Hand
-                            const targetInfluence = this.gamedatas.targetInfluence;
-                            const cardInformation = this.cardInformation();
-                            const blockedCard = this.gamedatas.blockedCard;
+                            if (isCurrentPlayer && isActive) {
+                                //Check Influence of Cards in Hand
+                                const targetInfluence = this.gamedatas.targetInfluence;
+                                const cardInformation = this.cardInformation();
+                                const blockedCard = this.gamedatas.blockedCard;
 
-                            highestInfluence = 0;
-                            higherInfluenceCards = [];
-                            hand.items.forEach(item => {
-                                const itemType = this.getCardType(item.id);
-                                if (cardInformation[itemType].influence > highestInfluence && item.id != blockedCard) {
-                                    highestInfluence = cardInformation[itemType].influence;
-                                }
-                                if (cardInformation[itemType].influence > targetInfluence && item.id != blockedCard) {
-                                    higherInfluenceCards.push(item.id.toString());
-                                }
-                            });
+                                highestInfluence = 0;
+                                higherInfluenceCards = [];
+                                hand.items.forEach(item => {
+                                    const itemType = this.getCardType(item.id);
+                                    if (cardInformation[itemType].influence > highestInfluence && item.id != blockedCard) {
+                                        highestInfluence = cardInformation[itemType].influence;
+                                    }
+                                    if (cardInformation[itemType].influence > targetInfluence && item.id != blockedCard) {
+                                        higherInfluenceCards.push(item.id.toString());
+                                    }
+                                });
 
-                            // Add CSS classes to unplayable cards
-                            hand.items.forEach(item => {
-                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                const itemType = this.getCardType(item.id);
-                                if ((higherInfluenceCards.length > 0 && !higherInfluenceCards.includes(item.id.toString()) && item.id != blockedCard) || 
-                                    (higherInfluenceCards.length === 0 && cardInformation[itemType].influence != highestInfluence && item.id != blockedCard)) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                }
-                                if (item.id == blockedCard) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
-                                }
-                            });
-
-                        }
-                    });
-                    break;
-                case 'selectionScholar':
-                    //THIS IS -> Take on Card from Target Court (4 or lower, if not possible any. Not Scholar or Assassin)
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
-                        const isActive = this.isCurrentPlayerActive();
-                        const blockedCard = this.gamedatas.blockedCard;
-                        hand.setSelectionMode(0);
-                        court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
-    
-                        if (isTargetPlayer && isActive) {
-                            //Check Influence of Cards in Hand
-                            const cardInformation = this.cardInformation();
-                            coveredCards = [];
-                            Object.values(this.gamedatas.assassins).forEach(assassin => {
-                                coveredCards.push(assassin.coveredCardId);
-                            });
-                            validCardsUnderFive = [];
-                            validCardsAll = [];
-
-                            court.items.forEach(item => {
-                                const itemType = this.getCardType(item.id);
-                                if (cardInformation[itemType].influence < 5 && itemType != 'Assassin' && itemType != 'Scholar' && !coveredCards.includes(item.id.toString())) {
-                                    validCardsUnderFive.push(item.id.toString());
-                                }
-                                if (itemType != 'Assassin' && itemType != 'Scholar' && !coveredCards.includes(item.id.toString())) {
-                                    validCardsAll.push(item.id.toString());
-                                }
-                            });
-
-                            if (validCardsUnderFive.length > 0) {
-                                // Add CSS classes to non-Squires
-                                court.items.forEach(item => {
-                                    const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
-                                    if (!validCardsUnderFive.includes(item.id.toString()) && item.id != blockedCard) {
+                                // Add CSS classes to unplayable cards
+                                hand.items.forEach(item => {
+                                    const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                    const itemType = this.getCardType(item.id);
+                                    if ((higherInfluenceCards.length > 0 && !higherInfluenceCards.includes(item.id.toString()) && item.id != blockedCard) || 
+                                        (higherInfluenceCards.length === 0 && cardInformation[itemType].influence != highestInfluence && item.id != blockedCard)) {
                                         dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
                                     }
                                     if (item.id == blockedCard) {
                                         dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
                                     }
                                 });
-                            } else {
+
+                            }
+                        });
+                        break;
+                    case 'selectionScholar':
+                        //THIS IS -> Take on Card from Target Court (4 or lower, if not possible any. Not Scholar or Assassin)
+                        Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                            const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
+                            const isActive = this.isCurrentPlayerActive();
+                            const blockedCard = this.gamedatas.blockedCard;
+                            hand.setSelectionMode(0);
+                            court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
+        
+                            if (isTargetPlayer && isActive) {
+                                //Check Influence of Cards in Hand
+                                const cardInformation = this.cardInformation();
+                                coveredCards = [];
+                                Object.values(this.gamedatas.assassins).forEach(assassin => {
+                                    coveredCards.push(assassin.coveredCardId);
+                                });
+                                validCardsUnderFive = [];
+                                validCardsAll = [];
+
+                                court.items.forEach(item => {
+                                    const itemType = this.getCardType(item.id);
+                                    if (cardInformation[itemType].influence < 5 && itemType != 'Assassin' && itemType != 'Scholar' && !coveredCards.includes(item.id.toString())) {
+                                        validCardsUnderFive.push(item.id.toString());
+                                    }
+                                    if (itemType != 'Assassin' && itemType != 'Scholar' && !coveredCards.includes(item.id.toString())) {
+                                        validCardsAll.push(item.id.toString());
+                                    }
+                                });
+
+                                if (validCardsUnderFive.length > 0) {
+                                    // Add CSS classes to non-Squires
+                                    court.items.forEach(item => {
+                                        const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
+                                        if (!validCardsUnderFive.includes(item.id.toString()) && item.id != blockedCard) {
+                                            dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                        }
+                                        if (item.id == blockedCard) {
+                                            dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
+                                        }
+                                    });
+                                } else {
+                                    court.items.forEach(item => {
+                                        const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
+                                        if (!validCardsAll.includes(item.id.toString()) && item.id != blockedCard) {
+                                            dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                        }
+                                        if (item.id == blockedCard) {
+                                            dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                        break;       
+                    case 'selectionPriestFirst':
+                        //THIS IS -> Nearly regular card selection. But Target player need to have card with lower value. Not Assassin or Jester
+                        playedSquireIds = this.gamedatas.cards
+                        .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
+                        .map(squire => squire.card_id.toString());
+                        allCourtCards = this.gamedatas.cards
+                        .filter(item => item.card_location === 'court')
+                        .map(item => item.card_id.toString());
+        
+                        //check covered cards in court
+                        coveredCards = [];
+                        Object.values(this.gamedatas.assassins).forEach(assassin => {
+                            coveredCards.push(assassin.coveredCardId);
+                        });
+
+                        const cardInformation = this.cardInformation();
+                        lowestInfluence = 10;
+                        this.gamedatas.cards.forEach(item => {
+                            if (item.card_location == 'court' && item.card_owner == this.gamedatas.targetPlayer) {
+                                const cardInfluence = cardInformation[item.card_type].influence;
+                                if (cardInfluence < lowestInfluence && item.card_type != 'Assassin' && item.card_type != 'Jester' && item.card_id != this.gamedatas.blockedCard && !coveredCards.includes(item.card_id)) {
+                                    lowestInfluence = cardInfluence;
+                                }
+                            }
+                        });
+
+                        // Enable selection only in current player's hand
+                        Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                            const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
+                            const isActive = this.isCurrentPlayerActive();
+                            hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
+                            court.setSelectionMode(0); // Never select from courts
+        
+                            //Check mandatory Squire Play
+                            const squireIds = hand.items
+                            .filter(item => this.getCardType(item.id) === 'Squire')
+                            .map(squire => squire.id.toString());
+
+                            const courtIds = court.items
+                            .filter(item => !coveredCards.includes(item.id.toString()))
+                            .map(item => item.id.toString());
+
+                            if (isCurrentPlayer && isActive) {
+                                hand.items.forEach(item => {
+                                    const itemType = this.getCardType(item.id);
+                                    const itemInfluence = cardInformation[itemType].influence;
+                                    const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
+                                    if (
+                                        (playedSquireIds.length > 0 && squireIds.length > 0 && !squireIds.includes(item.id.toString())) ||
+                                        (courtIds.length < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
+                                        (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin') ||
+                                        (itemInfluence <= lowestInfluence)
+                                        ) {
+                                        dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
+                                    }
+                                });
+                            }
+                        });
+
+                        const isActive = this.isCurrentPlayerActive();
+                        if (isActive === true) {
+                            this.statusBar.addActionButton(
+                                _("Pass"),
+                                () => this.priestPass(),
+                                { color: 'secondary' }
+                            );
+                        }
+
+                        break;
+                    case 'selectionPriestSecond':
+                        //THIS IS -> But Target player needs to give back card with lower value. Not Assassin or Jester
+                        Object.values(this.playerStocks).forEach(({ hand, court }) => {
+                            const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
+                            const isActive = this.isCurrentPlayerActive();
+                            hand.setSelectionMode(0);
+                            court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
+                
+                            if (isTargetPlayer && isActive) {
+                                //Check Influence of Cards in Hand
+                                const cardInformation = this.cardInformation();
+                                const targetInfluence = this.gamedatas.targetInfluence;
+                                const blockedCard = this.gamedatas.blockedCard;
+                                coveredCards = [];
+                                Object.values(this.gamedatas.assassins).forEach(assassin => {
+                                    coveredCards.push(assassin.coveredCardId);
+                                });
+                                validCardsAll = [];
+            
+                                court.items.forEach(item => {
+                                    const itemType = this.getCardType(item.id);
+                                    if (!coveredCards.includes(item.id.toString()) && targetInfluence > cardInformation[itemType].influence && itemType != 'Assassin' && itemType != 'Jester' && item.id != blockedCard) {
+                                        validCardsAll.push(item.id.toString());
+                                    }
+                                });
                                 court.items.forEach(item => {
                                     const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
                                     if (!validCardsAll.includes(item.id.toString()) && item.id != blockedCard) {
@@ -1509,116 +1617,11 @@ function (dojo, declare) {
                                     }
                                 });
                             }
-                        }
-                    });
-                    break;       
-                case 'selectionPriestFirst':
-                    //THIS IS -> Nearly regular card selection. But Target player need to have card with lower value. Not Assassin or Jester
-                    playedSquireIds = this.gamedatas.cards
-                    .filter(item => item.card_type === 'Squire' && item.card_location === 'court')
-                    .map(squire => squire.card_id.toString());
-                    allCourtCards = this.gamedatas.cards
-                    .filter(item => item.card_location === 'court')
-                    .map(item => item.card_id.toString());
-    
-                    //check covered cards in court
-                    coveredCards = [];
-                    Object.values(this.gamedatas.assassins).forEach(assassin => {
-                        coveredCards.push(assassin.coveredCardId);
-                    });
-
-                    const cardInformation = this.cardInformation();
-                    lowestInfluence = 10;
-                    this.gamedatas.cards.forEach(item => {
-                        if (item.card_location == 'court' && item.card_owner == this.gamedatas.targetPlayer) {
-                            const cardInfluence = cardInformation[item.card_type].influence;
-                            if (cardInfluence < lowestInfluence && item.card_type != 'Assassin' && item.card_type != 'Jester' && item.card_id != this.gamedatas.blockedCard && !coveredCards.includes(item.card_id)) {
-                                lowestInfluence = cardInfluence;
-                            }
-                        }
-                    });
-
-                    // Enable selection only in current player's hand
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isCurrentPlayer = hand.ownerPlayerId === this.player_id;
-                        const isActive = this.isCurrentPlayerActive();
-                        hand.setSelectionMode(isCurrentPlayer && isActive ? 1 : 0);
-                        court.setSelectionMode(0); // Never select from courts
-    
-                        //Check mandatory Squire Play
-                        const squireIds = hand.items
-                        .filter(item => this.getCardType(item.id) === 'Squire')
-                        .map(squire => squire.id.toString());
-
-                        const courtIds = court.items
-                        .filter(item => !coveredCards.includes(item.id.toString()))
-                        .map(item => item.id.toString());
-
-                        if (isCurrentPlayer && isActive) {
-                            hand.items.forEach(item => {
-                                const itemType = this.getCardType(item.id);
-                                const itemInfluence = cardInformation[itemType].influence;
-                                const itemDiv = $(`${hand.container_div.id}_item_${item.id}`);
-                                if (
-                                    (playedSquireIds.length > 0 && squireIds.length > 0 && !squireIds.includes(item.id.toString())) ||
-                                    (courtIds.length < 3 && this.getCardType(item.id) === 'Princess' && hand.items.length > 1) ||
-                                    (allCourtCards.length === 0 && this.getCardType(item.id) === 'Assassin') ||
-                                    (itemInfluence <= lowestInfluence)
-                                    ) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                }
-                            });
-                        }
-                    });
-
-                    const isActive = this.isCurrentPlayerActive();
-                    if (isActive === true) {
-                        this.statusBar.addActionButton(
-                            _("Pass"),
-                            () => this.priestPass(),
-                            { color: 'secondary' }
-                        );
-                    }
-
-                    break;
-                case 'selectionPriestSecond':
-                    //THIS IS -> But Target player needs to give back card with lower value. Not Assassin or Jester
-                    Object.values(this.playerStocks).forEach(({ hand, court }) => {
-                        const isTargetPlayer = this.gamedatas.targetPlayer == hand.ownerPlayerId;
-                        const isActive = this.isCurrentPlayerActive();
-                        hand.setSelectionMode(0);
-                        court.setSelectionMode(isTargetPlayer && isActive ? 1 : 0); // Never select from courts
-            
-                        if (isTargetPlayer && isActive) {
-                            //Check Influence of Cards in Hand
-                            const cardInformation = this.cardInformation();
-                            const targetInfluence = this.gamedatas.targetInfluence;
-                            const blockedCard = this.gamedatas.blockedCard;
-                            coveredCards = [];
-                            Object.values(this.gamedatas.assassins).forEach(assassin => {
-                                coveredCards.push(assassin.coveredCardId);
-                            });
-                            validCardsAll = [];
-        
-                            court.items.forEach(item => {
-                                const itemType = this.getCardType(item.id);
-                                if (!coveredCards.includes(item.id.toString()) && targetInfluence > cardInformation[itemType].influence && itemType != 'Assassin' && itemType != 'Jester' && item.id != blockedCard) {
-                                    validCardsAll.push(item.id.toString());
-                                }
-                            });
-                            court.items.forEach(item => {
-                                const itemDiv = $(`${court.container_div.id}_item_${item.id}`);
-                                if (!validCardsAll.includes(item.id.toString()) && item.id != blockedCard) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_singlecard');
-                                }
-                                if (item.id == blockedCard) {
-                                    dojo.addClass(itemDiv, 'stockitem_unselectable_blocked');
-                                }
-                            });
-                        }
-                    });
-                    break;  
-            }
+                        });
+                        break;  
+                }
+                            
+            }, 100);
         },
 
         onLeavingState: function(stateName) {
